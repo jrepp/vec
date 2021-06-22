@@ -5,34 +5,40 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#ifndef VEC_H
-#define VEC_H
+#ifndef INCLUDED_VEC_H
+#define INCLUDED_VEC_H
 
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 #define VEC_VERSION "0.3.0"
 
-
 #define vec_unpack_(v)\
-  (char**)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
+  (uint8_t**)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
 
 
 #define vec_t(T)\
-  struct { T *data; int length, capacity; }
+  struct { T *data; size_t length, capacity; }
 
 
 #define vec_init(v) \
-  (void) ((v)->length = 0, (v)->capacity = 0, (v)->data = NULL, (v)->ref = NULL)
+  (void) ((v)->data = NULL, (v)->length = 0, (v)->capacity = 0)
 
 
 #define vec_deinit(v)\
-  ( VEC_FREE((v)->data),\
-    vec_init(v) ) 
+  ( VEC_FREE((v)->data), \
+    vec_init(v) )
 
 
-#define vec_push(v, val)\
-  ( vec_expand_(vec_unpack_(v)) ? -1 :\
-    ((v)->data[(v)->length++] = (val), 0))
+#define vec_push(v, val)                  \
+  ( vec_expand_(vec_unpack_(v))           \
+     ? -1                                 \
+     : (                                  \
+        (v)->data[(v)->length++] = (val), \
+        0                                 \
+       )                                  \
+  )
 
 
 #define vec_pop(v)\
@@ -45,13 +51,21 @@
 
 
 #define vec_swapsplice(v, start, count)\
-  ( vec_swapsplice_(vec_unpack_(v), start, count),\
-    (v)->length -= (count) )
+  (                                               \
+   vec_swapsplice_(vec_unpack_(v), start, count), \
+   (v)->length -= (count)                         \
+  )
 
 
-#define vec_insert(v, idx, val)\
-  ( vec_insert_(vec_unpack_(v), idx) ? -1 :\
-    ((v)->data[idx] = (val)), (v)->length++, 0 )
+#define vec_insert(v, idx, val)      \
+  ( vec_insert_(vec_unpack_(v), idx) \
+    ? -1                             \
+    : (                              \
+       (v)->data[idx] = (val),       \
+       (v)->length++,                \
+       0                             \
+      )                              \
+    )
     
 
 #define vec_sort(v, fn)\
@@ -86,80 +100,92 @@
   (v)->data[(v)->length - 1]
 
 
-#define vec_reserve(v, n)\
-  vec_reserve_(vec_unpack_(v), n)
+#define vec_reserve(v, n)          \
+  (vec_reserve_(vec_unpack_(v), n) \
+    ? -1                           \
+    : (                            \
+       0                           \
+      )                            \
+  )
 
- 
+
 #define vec_compact(v)\
-  vec_compact_(vec_unpack_(v))
+  (vec_compact_(vec_unpack_(v)) \
+    ? -1                        \
+    : (                         \
+       0                        \
+      )                         \
+    )
 
 
-#define vec_pusharr(v, arr, count)\
-  do {\
-    int i__, n__ = (count);\
-    if (vec_reserve_po2_(vec_unpack_(v), (v)->length + n__) != 0) break;\
-    for (i__ = 0; i__ < n__; i__++) {\
-      (v)->data[(v)->length++] = (arr)[i__];\
-    }\
+#define vec_pusharr(v, arr, count)                                       \
+  do {                                                                   \
+    size_t i__, n__ = (count);                                           \
+    if (vec_reserve_po2_(vec_unpack_(v), (v)->length + n__) != 0) break; \
+    for (i__ = 0; i__ < n__; i__++) {                                    \
+      (v)->data[(v)->length++] = (arr)[i__];                             \
+    }                                                                    \
   } while (0)
 
 
 #define vec_extend(v, v2)\
   vec_pusharr((v), (v2)->data, (v2)->length)
 
-
+#define VEC_NOT_FOUND ((size_t)-1)
 #define vec_find(v, val, idx)\
-  do {\
-    for ((idx) = 0; (idx) < (v)->length; (idx)++) {\
-      if ((v)->data[(idx)] == (val)) break;\
-    }\
-    if ((idx) == (v)->length) (idx) = -1;\
+  do {                                              \
+    for ((idx) = 0; (idx) < (v)->length; (idx)++) { \
+      if ((v)->data[(idx)] == (val)) break;         \
+    }                                               \
+    if ((idx) == (v)->length) (idx) = -1;           \
   } while (0)
 
 
-#define vec_remove(v, val)\
-  do {\
-    int idx__;\
-    vec_find(v, val, idx__);\
-    if (idx__ != -1) vec_splice(v, idx__, 1);\
+#define vec_remove(v, val)                    \
+  do {                                        \
+    size_t idx__;                             \
+    vec_find(v, val, idx__);                  \
+    if (idx__ != VEC_NOT_FOUND) {             \
+      vec_splice(v, idx__, 1);                \
+    }                                         \
   } while (0)
 
 
-#define vec_reverse(v)\
-  do {\
-    int i__ = (v)->length / 2;\
-    while (i__--) {\
-      vec_swap((v), i__, (v)->length - (i__ + 1));\
-    }\
+#define vec_reverse(v)                             \
+  do {                                             \
+    size_t i__ = (v)->length >> 1;                 \
+    while (i__--) {                                \
+      vec_swap((v), i__, (v)->length - (i__ + 1)); \
+    }                                              \
   } while (0)
 
 
-#define vec_foreach(v, var, iter)\
-  if  ( (v)->length > 0 )\
-  for ( (iter) = 0;\
-        (iter) < (v)->length && (((var) = (v)->data[(iter)]), 1);\
-        ++(iter))
+#define vec_foreach(v, var, iter)                                  \
+  if ((v)->length > 0)                                             \
+    for ((iter) = 0;                                               \
+         (iter) < (v)->length && (((var) = (v)->data[(iter)]), 1); \
+         ++(iter))
 
 
-#define vec_foreach_rev(v, var, iter)\
-  if  ( (v)->length > 0 )\
-  for ( (iter) = (v)->length - 1;\
-        (iter) >= 0 && (((var) = (v)->data[(iter)]), 1);\
-        --(iter))
+#define vec_foreach_rev(v, var, iter)                     \
+  if ((v)->length > 0)                                    \
+    for ((iter) = (v)->length - 1;                        \
+         (iter) >= 0 && (((var) = (v)->data[(iter)]), 1); \
+         --(iter))
 
 
-#define vec_foreach_ptr(v, var, iter)\
-  if  ( (v)->length > 0 )\
-  for ( (iter) = 0;\
-        (iter) < (v)->length && (((var) = &(v)->data[(iter)]), 1);\
-        ++(iter))
+#define vec_foreach_ptr(v, var, iter)                               \
+  if ((v)->length > 0)                                              \
+    for ((iter) = 0;                                                \
+         (iter) < (v)->length && (((var) = &(v)->data[(iter)]), 1); \
+         ++(iter))
 
 
-#define vec_foreach_ptr_rev(v, var, iter)\
-  if  ( (v)->length > 0 )\
-  for ( (iter) = (v)->length - 1;\
-        (iter) >= 0 && (((var) = &(v)->data[(iter)]), 1);\
-        --(iter))
+#define vec_foreach_ptr_rev(v, var, iter)                  \
+  if ((v)->length > 0)                                     \
+    for ((iter) = (v)->length - 1;                         \
+         (iter) >= 0 && (((var) = &(v)->data[(iter)]), 1); \
+         --(iter))
 
 
 
@@ -174,21 +200,21 @@
 #endif
 
 
-int vec_expand_(char **data, size_t *length, size_t *capacity, size_t memsz);
+int vec_expand_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz);
 
-int vec_reserve_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
+int vec_reserve_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz, size_t n);
 
-int vec_reserve_po2_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
+int vec_reserve_po2_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
 
-int vec_compact_(char **data, size_t *length, size_t *capacity, size_t memsz);
+int vec_compact_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz);
 
-int vec_insert_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t idx);
+int vec_insert_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t idx);
 
-void vec_splice_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t start, size_t count);
+void vec_splice_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count);
 
-void vec_swapsplice_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t start, size_t count);
+void vec_swapsplice_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count);
 
-void vec_swap_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t idx1, size_t idx2);
+void vec_swap_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t idx1, size_t idx2);
 
 
 typedef vec_t(void*) vec_void_t;
@@ -198,4 +224,4 @@ typedef vec_t(char) vec_char_t;
 typedef vec_t(float) vec_float_t;
 typedef vec_t(double) vec_double_t;
 
-#endif
+#endif // INCLUDED_VEC_H

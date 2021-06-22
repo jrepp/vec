@@ -263,7 +263,7 @@ int main(void) {
   { test_section("vec_find");
     vec_int_t v;
     vec_init(&v);
-    int i;
+    size_t i;
     for (i = 0; i < 26; i++) vec_push(&v, 'a' + i);
     vec_find(&v, 'a', i);
     test_assert(i == 0);
@@ -272,7 +272,7 @@ int main(void) {
     vec_find(&v, 'd', i);
     test_assert(i == 3);
     vec_find(&v, '_', i);
-    test_assert(i == -1);
+    test_assert(i == VEC_NOT_FOUND);
     vec_deinit(&v);
   }
 
@@ -310,8 +310,8 @@ int main(void) {
     vec_push(&v, 19);
     vec_push(&v, 31);
     vec_push(&v, 47);
-    int i, x;
-    int count = 0, acc = 1;
+    size_t i, x;
+    size_t count = 0, acc = 1;
     vec_foreach(&v, x, i) {
       acc *= (x + count);
       count++;
@@ -342,8 +342,9 @@ int main(void) {
     vec_push(&v, 19);
     vec_push(&v, 31);
     vec_push(&v, 47);
-    int i, *x;
-    int count = 0, acc = 1;
+    int *x;
+    size_t i;
+    size_t count = 0, acc = 1;
     vec_foreach_ptr(&v, x, i) {
       acc *= (*x + count);
       count++;
