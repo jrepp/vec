@@ -76,11 +76,11 @@
 
 #define vec_bsearch(v, key, idx, fn)                                    \
   do {                                                                  \
-    char* ptr = NULL;                                                   \
+    uint8_t* ptr = NULL;                                                \
     ptr = bsearch(key, (v)->data, (v)->length, sizeof(*(v)->data), fn); \
     *idx = ptr ?                                                        \
-      (ptr - (char*)(v)->data) / sizeof(*(v)->data)                     \
-      : VEC_ERR;                                                        \
+      (ptr - (uint8_t*)(v)->data) / sizeof(*((v)->data))                \
+      : VEC_NOT_FOUND;                                                  \
   } while (0)
 
 

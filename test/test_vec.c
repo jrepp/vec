@@ -129,7 +129,7 @@ int main(void) {
     vec_push(&v, 30);
     vec_push(&v, 35);
 	int key = 4;
-	int idx = -1;
+	size_t idx = VEC_NOT_FOUND;
     vec_bsearch(&v, &key, &idx, intptrcmp);
     test_assert(idx == 2);
 	key = 30;
@@ -137,7 +137,7 @@ int main(void) {
     test_assert(idx == 4);
 	key = 40;
 	vec_bsearch(&v, &key, &idx, intptrcmp);
-    test_assert(idx == -1);
+    test_assert(idx == VEC_NOT_FOUND);
     vec_deinit(&v);
   }
 
