@@ -12,8 +12,10 @@ int vec_expand_(uint8_t **data, const size_t *length, size_t *capacity, size_t m
   if (*length + 1 > *capacity) {
     void *ptr;
     int n = (*capacity == 0) ? 1 : *capacity << 1;
-    ptr = realloc(*data, n * memsz);
-    if (ptr == NULL) return -1;
+    ptr = VEC_REALLOC(*data, n * memsz);
+    if (ptr == NULL) {
+        return -1;
+    }
     *data = ptr;
     *capacity = n;
   }
