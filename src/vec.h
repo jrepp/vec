@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#define VEC_VERSION "0.3.1"
+#define VEC_VERSION "0.3.0"
 
 
 #define vec_unpack_(v)\

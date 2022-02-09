@@ -1,9 +1,9 @@
 {
   "name": "vec",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "repo": "rxi/vec",
   "description": "Type-safe dynamic array",
-  "keywords": ["dynamic", "array", "vec", "vector"],
+  "keywords": ["dynamic", "array", "vec", "vector", "memory", "typesafe"],
   "license": "MIT",
   "src": ["src/vec.c", "src/vec.h"]
 }
