@@ -9,7 +9,6 @@
 #define VEC_H
 
 #include <stdlib.h>
-#include <string.h>
 
 #define VEC_VERSION "0.2.1"
 
@@ -22,8 +21,8 @@
   struct { T *data; int length, capacity; }
 
 
-#define vec_init(v)\
-  memset((v), 0, sizeof(*(v)))
+#define vec_init(v) \
+  (void) ((v)->length = 0, (v)->capacity = 0, (v)->data = NULL, (v)->ref = NULL)
 
 
 #define vec_deinit(v)\

@@ -6,7 +6,7 @@
  */
 
 #include "vec.h"
-
+#include <string.h>
 
 int vec_expand_(char **data, int *length, int *capacity, int memsz) {
   if (*length + 1 > *capacity) {
