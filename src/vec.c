@@ -11,15 +11,15 @@
 int vec_expand_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz) {
   if (*length + 1 > *capacity) {
     void *ptr;
-    int n = (*capacity == 0) ? 1 : *capacity << 1;
+    vec_size_t n = (*capacity == 0) ? VEC_INIT_CAPACITY : VEC_GROW_CAPACITY(*capacity);
     ptr = VEC_REALLOC(*data, n * memsz);
     if (ptr == NULL) {
-        return -1;
+        return VEC_ERR_MEMORY;
     }
     *data = ptr;
     *capacity = n;
   }
-  return 0;
+  return VEC_OK;
 }
 
 
@@ -28,19 +28,19 @@ int vec_reserve_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity,
   if (n > *capacity) {
     uint8_t *ptr = VEC_REALLOC(*data, n * memsz);
     if (ptr == NULL) {
-        return -1;
+        return VEC_ERR_MEMORY;
     }
     *data = ptr;
     *capacity = n;
   }
-  return 0;
+  return VEC_OK;
 }
 
 
 int vec_reserve_po2_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n) {
   vec_size_t n2 = 1;
   if (n == 0) {
-    return 0;
+    return VEC_OK;
   }
   while (n2 < n) {
     n2 <<= 1;
@@ -59,24 +59,24 @@ int vec_compact_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity,
     vec_size_t n = *length;
     ptr = VEC_REALLOC(*data, n * memsz);
     if (ptr == NULL) {
-        return -1;
+        return VEC_ERR_MEMORY;
     }
     *capacity = n;
     *data = ptr;
   }
-  return 0;
+  return VEC_OK;
 }
 
 
 int vec_insert_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx) {
   int err = vec_expand_(data, length, capacity, memsz);
-  if (err) {
+  if (err != VEC_OK) {
     return err;
   }
   memmove(*data + (idx + 1) * memsz,
           *data + idx * memsz,
           (*length - idx) * memsz);
-  return 0;
+  return VEC_OK;
 }
 
 
@@ -97,13 +97,16 @@ void vec_swapsplice_(uint8_t *const *data, const vec_size_t *length, const vec_s
 
 
 void vec_swap_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2) {
-  unsigned char *a, *b, tmp;
-  int count;
   (void) length;
   (void) capacity;
-  if (idx1 == idx2) return;
-  a = (uint8_t*) *data + idx1 * memsz;
-  b = (uint8_t*) *data + idx2 * memsz;
+  uint8_t *a, *b, tmp;
+  size_t count;
+
+  if (idx1 == idx2) {
+      return;
+  }
+  a = *data + idx1 * memsz;
+  b = *data + idx2 * memsz;
   count = memsz;
   while (count--) {
     tmp = *a;

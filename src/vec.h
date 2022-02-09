@@ -14,8 +14,12 @@
 
 #define VEC_VERSION "0.3.0"
 #define VEC_ERR -1
+#define VEC_ERR_MEMORY -2
 #define VEC_OK 0
-#define VEC_NOT_FOUND ((size_t)VEC_ERR)
+#define VEC_NOT_FOUND ((vec_size_t)VEC_ERR)
+
+#define VEC_INIT_CAPACITY 8
+#define VEC_GROW_CAPACITY(n) (((n) << 1) + (n >> 1))
 
 // If a different size type is desired
 #if !defined(VEC_SIZE_TYPE)
