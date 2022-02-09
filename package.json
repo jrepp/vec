@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "repo": "rxi/vec",
   "description": "Type-safe dynamic array",
-  "keywords": ["dynamic", "array", "vec", "vector", "memory", "typesafe"],
+  "keywords": ["dynamic", "array", "typesafe", "vec", "vector", "memory"],
   "license": "MIT",
   "src": ["src/vec.c", "src/vec.h"]
 }
