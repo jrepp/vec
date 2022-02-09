@@ -1,6 +1,8 @@
 # vec
 A type-safe dynamic array implementation for C. 
 
+![build workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+
 
 ## Installation 
 The [vec.c](src/vec.c?raw=1) and [vec.h](src/vec.h?raw=1) files can be dropped
