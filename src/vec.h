@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-#define VEC_VERSION "0.2.1"
+#define VEC_VERSION "0.3.1"
 
 
 #define vec_unpack_(v)\
@@ -174,19 +174,21 @@
 #endif
 
 
-int vec_expand_(char **data, int *length, int *capacity, int memsz);
-int vec_reserve_(char **data, int *length, int *capacity, int memsz, int n);
-int vec_reserve_po2_(char **data, int *length, int *capacity, int memsz,
-                     int n);
-int vec_compact_(char **data, int *length, int *capacity, int memsz);
-int vec_insert_(char **data, int *length, int *capacity, int memsz,
-                int idx);
-void vec_splice_(char **data, int *length, int *capacity, int memsz,
-                 int start, int count);
-void vec_swapsplice_(char **data, int *length, int *capacity, int memsz,
-                     int start, int count);
-void vec_swap_(char **data, int *length, int *capacity, int memsz,
-               int idx1, int idx2);
+int vec_expand_(char **data, size_t *length, size_t *capacity, size_t memsz);
+
+int vec_reserve_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
+
+int vec_reserve_po2_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
+
+int vec_compact_(char **data, size_t *length, size_t *capacity, size_t memsz);
+
+int vec_insert_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t idx);
+
+void vec_splice_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t start, size_t count);
+
+void vec_swapsplice_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t start, size_t count);
+
+void vec_swap_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t idx1, size_t idx2);
 
 
 typedef vec_t(void*) vec_void_t;
