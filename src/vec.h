@@ -17,12 +17,19 @@
 #define VEC_OK 0
 #define VEC_NOT_FOUND ((size_t)VEC_ERR)
 
+// If a different size type is desired
+#if !defined(VEC_SIZE_TYPE)
+typedef size_t vec_size_t;
+#else
+typedef VEC_SIZE_TYPE vec_size_t;
+#endif
+
 #define vec_unpack_(v) \
   (uint8_t**)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
 
 
 #define vec_t(T) \
-  struct { T *data; size_t length, capacity; }
+  struct { T *data; vec_size_t length, capacity; }
 
 
 #define vec_init(v) \
@@ -97,11 +104,11 @@
 
 
 #define vec_first(v) \
-  (v)->data[0]
+  ((v)->data[0])
 
 
 #define vec_last(v) \
-  (v)->data[(v)->length - 1]
+  ((v)->data[(v)->length - 1])
 
 
 #define vec_reserve(v, n)          \
@@ -118,7 +125,7 @@
 
 #define vec_pusharr(v, arr, count)                                       \
   do {                                                                   \
-    size_t i__, n__ = (count);                                           \
+    vec_size_t i__, n__ = (count);                                           \
     if (vec_reserve_po2_(vec_unpack_(v), (v)->length + n__) != 0) break; \
     for (i__ = 0; i__ < n__; i__++) {                                    \
       (v)->data[(v)->length++] = (arr)[i__];                             \
@@ -140,7 +147,7 @@
 
 #define vec_remove(v, val)                    \
   do {                                        \
-    size_t idx__;                             \
+    vec_size_t idx__;                             \
     vec_find(v, val, idx__);                  \
     if (idx__ != VEC_NOT_FOUND) {             \
       vec_splice(v, idx__, 1);                \
@@ -150,7 +157,7 @@
 
 #define vec_reverse(v)                             \
   do {                                             \
-    size_t i__ = (v)->length >> 1;                 \
+    vec_size_t i__ = (v)->length >> 1;                 \
     while (i__--) {                                \
       vec_swap((v), i__, (v)->length - (i__ + 1)); \
     }                                              \
@@ -197,21 +204,21 @@
 #endif
 
 
-int vec_expand_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz);
+int vec_expand_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
-int vec_reserve_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz, size_t n);
+int vec_reserve_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
 
-int vec_reserve_po2_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t n);
+int vec_reserve_po2_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
 
-int vec_compact_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz);
+int vec_compact_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
-int vec_insert_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t idx);
+int vec_insert_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx);
 
-void vec_splice_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count);
+void vec_splice_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
 
-void vec_swapsplice_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count);
+void vec_swapsplice_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
 
-void vec_swap_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t idx1, size_t idx2);
+void vec_swap_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2);
 
 
 typedef vec_t(void*) vec_void_t;

@@ -8,7 +8,7 @@
 #include "vec.h"
 #include <string.h>
 
-int vec_expand_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz) {
+int vec_expand_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz) {
   if (*length + 1 > *capacity) {
     void *ptr;
     int n = (*capacity == 0) ? 1 : *capacity << 1;
@@ -23,7 +23,7 @@ int vec_expand_(uint8_t **data, const size_t *length, size_t *capacity, size_t m
 }
 
 
-int vec_reserve_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz, size_t n) {
+int vec_reserve_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n) {
   (void) length;
   if (n > *capacity) {
     uint8_t *ptr = VEC_REALLOC(*data, n * memsz);
@@ -37,8 +37,8 @@ int vec_reserve_(uint8_t **data, const size_t *length, size_t *capacity, size_t 
 }
 
 
-int vec_reserve_po2_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t n) {
-  size_t n2 = 1;
+int vec_reserve_po2_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n) {
+  vec_size_t n2 = 1;
   if (n == 0) {
     return 0;
   }
@@ -49,14 +49,14 @@ int vec_reserve_po2_(uint8_t **data, size_t *length, size_t *capacity, size_t me
 }
 
 
-int vec_compact_(uint8_t **data, const size_t *length, size_t *capacity, size_t memsz) {
+int vec_compact_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz) {
   if (*length == 0) {
     VEC_FREE(*data);
     *data = NULL;
     *capacity = 0;
   } else {
     void *ptr;
-    size_t n = *length;
+    vec_size_t n = *length;
     ptr = VEC_REALLOC(*data, n * memsz);
     if (ptr == NULL) {
         return -1;
@@ -68,7 +68,7 @@ int vec_compact_(uint8_t **data, const size_t *length, size_t *capacity, size_t 
 }
 
 
-int vec_insert_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, size_t idx) {
+int vec_insert_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx) {
   int err = vec_expand_(data, length, capacity, memsz);
   if (err) {
     return err;
@@ -80,7 +80,7 @@ int vec_insert_(uint8_t **data, size_t *length, size_t *capacity, size_t memsz, 
 }
 
 
-void vec_splice_(uint8_t * const*data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count) {
+void vec_splice_(uint8_t * const*data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count) {
   (void) capacity;
   memmove(*data + start * memsz,
           *data + (start + count) * memsz,
@@ -88,7 +88,7 @@ void vec_splice_(uint8_t * const*data, const size_t *length, const size_t *capac
 }
 
 
-void vec_swapsplice_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t start, size_t count) {
+void vec_swapsplice_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count) {
   (void) capacity;
   memmove(*data + start * memsz,
           *data + (*length - count) * memsz,
@@ -96,7 +96,7 @@ void vec_swapsplice_(uint8_t *const *data, const size_t *length, const size_t *c
 }
 
 
-void vec_swap_(uint8_t *const *data, const size_t *length, const size_t *capacity, size_t memsz, size_t idx1, size_t idx2) {
+void vec_swap_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2) {
   unsigned char *a, *b, tmp;
   int count;
   (void) length;
