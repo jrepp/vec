@@ -13,12 +13,15 @@
 #include <stdint.h>
 
 #define VEC_VERSION "0.3.0"
+#define VEC_ERR -1
+#define VEC_OK 0
+#define VEC_NOT_FOUND ((size_t)VEC_ERR)
 
-#define vec_unpack_(v)\
+#define vec_unpack_(v) \
   (uint8_t**)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
 
 
-#define vec_t(T)\
+#define vec_t(T) \
   struct { T *data; size_t length, capacity; }
 
 
@@ -26,22 +29,21 @@
   (void) ((v)->data = NULL, (v)->length = 0, (v)->capacity = 0)
 
 
-#define vec_deinit(v)\
-  ( VEC_FREE((v)->data), \
-    vec_init(v) )
+#define vec_deinit(v) \
+  ( VEC_FREE((v)->data), vec_init(v) )
 
 
 #define vec_push(v, val)                  \
   ( vec_expand_(vec_unpack_(v))           \
-     ? -1                                 \
+     ? VEC_ERR                            \
      : (                                  \
         (v)->data[(v)->length++] = (val), \
-        0                                 \
+        VEC_OK                            \
        )                                  \
   )
 
 
-#define vec_pop(v)\
+#define vec_pop(v) \
   (v)->data[--(v)->length]
 
 
@@ -59,11 +61,11 @@
 
 #define vec_insert(v, idx, val)      \
   ( vec_insert_(vec_unpack_(v), idx) \
-    ? -1                             \
+    ? VEC_ERR                        \
     : (                              \
        (v)->data[idx] = (val),       \
        (v)->length++,                \
-       0                             \
+       VEC_OK                        \
       )                              \
     )
     
@@ -72,11 +74,13 @@
   qsort((v)->data, (v)->length, sizeof(*(v)->data), fn)
 
 
-#define vec_bsearch(v, key, idx, fn) \
-  do {\
-    char* ptr = NULL; \
+#define vec_bsearch(v, key, idx, fn)                                    \
+  do {                                                                  \
+    char* ptr = NULL;                                                   \
     ptr = bsearch(key, (v)->data, (v)->length, sizeof(*(v)->data), fn); \
-    *idx = ptr ? (ptr - (char*)(v)->data) / sizeof(*(v)->data) : -1; \
+    *idx = ptr ?                                                        \
+      (ptr - (char*)(v)->data) / sizeof(*(v)->data)                     \
+      : VEC_ERR;                                                        \
   } while (0)
 
 
@@ -84,38 +88,32 @@
   vec_swap_(vec_unpack_(v), idx1, idx2)
 
 
-#define vec_truncate(v, len)\
+#define vec_truncate(v, len) \
   ((v)->length = (len) < (v)->length ? (len) : (v)->length)
 
 
-#define vec_clear(v)\
+#define vec_clear(v) \
   ((v)->length = 0)
 
 
-#define vec_first(v)\
+#define vec_first(v) \
   (v)->data[0]
 
 
-#define vec_last(v)\
+#define vec_last(v) \
   (v)->data[(v)->length - 1]
 
 
 #define vec_reserve(v, n)          \
   (vec_reserve_(vec_unpack_(v), n) \
-    ? -1                           \
-    : (                            \
-       0                           \
-      )                            \
+    ? (VEC_ERR)                    \
+    : (VEC_OK)                     \
   )
 
 
-#define vec_compact(v)\
+#define vec_compact(v) \
   (vec_compact_(vec_unpack_(v)) \
-    ? -1                        \
-    : (                         \
-       0                        \
-      )                         \
-    )
+    ? VEC_ERR : VEC_OK)
 
 
 #define vec_pusharr(v, arr, count)                                       \
@@ -131,13 +129,12 @@
 #define vec_extend(v, v2)\
   vec_pusharr((v), (v2)->data, (v2)->length)
 
-#define VEC_NOT_FOUND ((size_t)-1)
 #define vec_find(v, val, idx)\
-  do {                                              \
-    for ((idx) = 0; (idx) < (v)->length; (idx)++) { \
-      if ((v)->data[(idx)] == (val)) break;         \
-    }                                               \
-    if ((idx) == (v)->length) (idx) = -1;           \
+  do {                                                \
+    for ((idx) = 0; (idx) < (v)->length; (idx)++) {   \
+      if ((v)->data[(idx)] == (val)) break;           \
+    }                                                 \
+    if ((idx) == (v)->length) (idx) = VEC_NOT_FOUND;  \
   } while (0)
 
 
@@ -190,13 +187,13 @@
 
 
 #if defined(VEC_FREE) && defined(VEC_REALLOC)
-// Both defined, no error
+    // Both defined, no error
 #elif !defined(VEC_REALLOC) && !defined(VEC_FREE)
-// Neither defined, use stdlib
-#define VEC_FREE free
-#define VEC_REALLOC realloc
+    // Neither defined, use stdlib
+    #define VEC_FREE free
+    #define VEC_REALLOC realloc
 #else
-#error "Must define all or none of VEC_FREE and VEC_REALLOC."
+    #error "Must define all or none of VEC_FREE and VEC_REALLOC."
 #endif
 
 
