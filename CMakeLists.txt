@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.13)
 project(vec
         VERSION 0.3.0
         LANGUAGES C)
