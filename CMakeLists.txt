@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 project(vec
-        VERSION 0.2.2
+        VERSION 0.3.0
         LANGUAGES C)
 
 set(CMAKE_C_STANDARD_REQUIRED ON)
