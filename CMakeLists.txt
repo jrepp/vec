@@ -19,10 +19,16 @@ endmacro()
 add_library(vec STATIC src/vec.c src/vec.h)
 configure_compiler(vec)
 
-# vec test suite
+# vec basic test suite
 add_executable(test_vec test/test_vec.c)
 configure_compiler(test_vec)
 target_include_directories(test_vec PRIVATE src/)
 target_link_libraries(test_vec vec)
+
+# configure ctest
+enable_testing()
+add_test(NAME basics 
+         COMMAND test_vec)
+
 
 
