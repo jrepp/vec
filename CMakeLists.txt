@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
-project(vec)
+project(vec
+        VERSION 0.2.2
+        LANGUAGES C)
+
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
 macro(configure_compiler TARGET_NAME)
     target_compile_features(${TARGET_NAME} PUBLIC c_std_99)
@@ -11,7 +16,7 @@ macro(configure_compiler TARGET_NAME)
 endmacro()
 
 # vec library
-add_library(vec STATIC src/vec.c)
+add_library(vec STATIC src/vec.c src/vec.h)
 configure_compiler(vec)
 
 # vec test suite
