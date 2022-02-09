@@ -36,7 +36,7 @@ int vec_reserve_(char **data, size_t *length, size_t *capacity, size_t memsz, si
 
 
 int vec_reserve_po2_(
-  char **data, int *length, size_t *capacity, size_t memsz, size_t n
+  char **data, size_t *length, size_t *capacity, size_t memsz, size_t n
 ) {
   size_t n2 = 1;
   if (n == 0) {
@@ -89,9 +89,7 @@ void vec_splice_(char **data, size_t *length, size_t *capacity, size_t memsz, si
 }
 
 
-void vec_swapsplice_(char **data, int *length, int *capacity, int memsz,
-                     int start, int count
-) {
+void vec_swapsplice_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t start, size_t count) {
   (void) capacity;
   memmove(*data + start * memsz,
           *data + (*length - count) * memsz,
@@ -99,9 +97,7 @@ void vec_swapsplice_(char **data, int *length, int *capacity, int memsz,
 }
 
 
-void vec_swap_(char **data, int *length, int *capacity, int memsz,
-               int idx1, int idx2 
-) {
+void vec_swap_(char **data, size_t *length, size_t *capacity, size_t memsz, size_t idx1, size_t idx2) {
   unsigned char *a, *b, tmp;
   int count;
   (void) length;
