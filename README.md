@@ -1,6 +1,8 @@
 # vec
 A type-safe dynamic array implementation for C. 
 
+![build workflow](https://github.com/jrepp/vec/actions/workflows/cmake.yml/badge.svg)
+
 
 ## Installation 
 The [vec.c](src/vec.c?raw=1) and [vec.h](src/vec.h?raw=1) files can be dropped
