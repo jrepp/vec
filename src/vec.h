@@ -12,10 +12,24 @@
 #include <string.h>
 #include <stdint.h>
 
+// See CMakeLists.txt and package.json
 #define VEC_VERSION "0.3.0"
+
+
+// General error, the operation failed
 #define VEC_ERR -1
-#define VEC_ERR_MEMORY -2
+
+// The vector is out of memory but reallocation is not allowed
+#define VEC_ERR_NO_REALLOC -2
+
+// The allocator is unable to return additional memory
+#define VEC_ERR_NO_MEMORY -3
+
+// 0 is used as a general OK signal
 #define VEC_OK 0
+
+// When doing indexed operations, a general error is returned when the
+// item being indexed is not found
 #define VEC_NOT_FOUND ((vec_size_t)VEC_ERR)
 
 #define VEC_INIT_CAPACITY 8
@@ -28,20 +42,50 @@ typedef size_t vec_size_t;
 typedef VEC_SIZE_TYPE vec_size_t;
 #endif
 
+//
+// Structure alignment helpers
+//
+#if defined(__GNUC__) || defined(__clang__)
+  #define VEC_PRE_ALIGN
+  #define VEC_POST_ALIGN __attribute__ ((aligned (8)))
+#elif defined(WIN32)
+  #define VEC_PRE_ALIGN __declspec(align(8))
+  #define VEC_POST_ALIGN
+#endif
+
+
+//
+// Options for vectors
+//
+#define VEC_OWNS_MEMORY 0x10
+#define VEC_ALLOW_REALLOC 0x20
+
+
+//
+// Count the dimensions of an array
+//
+#define vec_countof(arr) \
+  (sizeof(arr) / sizeof(arr[0]))
+
+// Given a vector unpack it into arguments for the vector helper functions
 #define vec_unpack_(v) \
-  (uint8_t**)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
+  (uint8_t**)&(v)->data, &(v)->options, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
 
-
-#define vec_t(T) \
-  struct { T *data; vec_size_t length, capacity; }
+// Declare a new vector type
+#define vec_t(T, name) \
+  typedef struct { T *data; size_t options, length, capacity; } (name) VEC_POST_ALIGN
 
 
 #define vec_init(v) \
   (void) ((v)->data = NULL, (v)->length = 0, (v)->capacity = 0)
 
 
+#define vec_init_with(v, ptr, capacity_) \
+  (void) ((v)->data = (ptr), (v)->length = 0, (v)->capacity = (capacity_))
+
+
 #define vec_deinit(v) \
-  ( VEC_FREE((v)->data), vec_init(v) )
+  ( ((v)->options & VEC_OWNS_MEMORY) ? VEC_FREE((v)->data) : (void)), vec_init(v) )
 
 
 #define vec_push(v, val)                  \
@@ -153,6 +197,15 @@ typedef VEC_SIZE_TYPE vec_size_t;
   } while (0)
 
 
+#define vec_rfind(v, val, idx)\
+  do {                                                \
+    for ((idx) = (v)->length - 1; (idx) < (v)->length; (idx)--) {   \
+      if ((v)->data[(idx)] == (val)) break;           \
+    }                                                 \
+    if ((idx) == (v)->length) (idx) = VEC_NOT_FOUND;  \
+  } while (0)
+
+
 #define vec_remove(v, val)                    \
   do {                                        \
     vec_size_t idx__;                             \
@@ -212,28 +265,28 @@ typedef VEC_SIZE_TYPE vec_size_t;
 #endif
 
 
-int vec_expand_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz);
+int vec_expand_(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
-int vec_reserve_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
+int vec_reserve_(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
 
-int vec_reserve_po2_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
+int vec_reserve_po2_(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
 
-int vec_compact_(uint8_t **data, const vec_size_t *length, vec_size_t *capacity, vec_size_t memsz);
+int vec_compact_(uint8_t **data, const vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
-int vec_insert_(uint8_t **data, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx);
+int vec_insert_(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx);
 
-void vec_splice_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
+void vec_splice_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
 
-void vec_swapsplice_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
+void vec_swapsplice_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
 
-void vec_swap_(uint8_t *const *data, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2);
+void vec_swap_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2);
 
 
-typedef vec_t(void*) vec_void_t;
-typedef vec_t(char*) vec_str_t;
-typedef vec_t(int) vec_int_t;
-typedef vec_t(char) vec_char_t;
-typedef vec_t(float) vec_float_t;
-typedef vec_t(double) vec_double_t;
+vec_t(void*, vec_void_t);
+vec_t(char*, vec_str_t);
+vec_t(int, vec_int_t);
+vec_t(char, vec_char_t);
+vec_t(float, vec_float_t);
+vec_t(double, vec_double_t);
 
 #endif // INCLUDED_VEC_H
