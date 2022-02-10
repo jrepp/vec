@@ -152,6 +152,9 @@ void *test_realloc(void *existing_request, size_t bytes) {
   mem_header_t *new_header = (mem_header_t *)new_region;
   assert_valid_pattern(new_header->pattern, sizeof(new_header->pattern), MEM_HEADER_BYTE);
   assert(new_header->sequence == header_seq);
+  if (new_header->sequence != header_seq) {
+    return NULL;
+  }
   new_header->reallocations++;
   new_header->size = bytes;
 
