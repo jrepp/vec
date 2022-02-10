@@ -8,11 +8,10 @@
 #include "vec.h"
 #include <string.h>
 
-static uint8_t *vec_alloc_mem_(uint8_t *existing, size_t existing_bytes, size_t new_bytes, size_t *options) {
-  // If the vector doesn't own memory a new region must be acquired, do not release
-  // the old region
-  if (0 == (options & VEC_OWNS_MEMORY)) {
-    uint8_t *new_region = VEC_ALLOC(bytes);
+static uint8_t *vec_alloc_mem_(uint8_t *existing, vec_size_t *options, size_t existing_bytes, size_t new_bytes) {
+  // If the vector doesn't own memory a new region must be acquired, do not release the old region
+  if (0 == (*options & VEC_OWNS_MEMORY)) {
+    uint8_t *new_region = VEC_MALLOC(new_bytes);
     if (new_region) {
       memcpy(new_region, existing, existing_bytes);
       *options |= VEC_OWNS_MEMORY;
@@ -29,13 +28,13 @@ int vec_expand_(uint8_t **data, vec_size_t *options, const vec_size_t *length, v
     if (0 == (*options & VEC_ALLOW_REALLOC)) {
       return VEC_ERR_NO_REALLOC;
     }
-    size_t n = (*capacity == 0) ? 1 : *capacity << 1;
-    uint8_t* ptr = vec_alloc_mem_(*data, n * memsz);
+    size_t new_capacity = (*capacity == 0) ? VEC_INIT_CAPACITY : VEC_GROW_CAPACITY(*capacity);
+    uint8_t* ptr = vec_alloc_mem_(*data, options, *length * memsz, new_capacity * memsz);
     if (ptr == NULL) {
         return VEC_ERR_NO_MEMORY;
     }
     *data = ptr;
-    *capacity = n;
+    *capacity = new_capacity;
   }
   return VEC_OK;
 }
@@ -47,7 +46,7 @@ int vec_reserve_(uint8_t **data, vec_size_t *options, const vec_size_t *length, 
     if (0 == (*options & VEC_ALLOW_REALLOC)) {
       return VEC_ERR_NO_REALLOC;
     }
-    uint8_t *ptr = VEC_REALLOC(*data, n * memsz);
+    uint8_t *ptr = vec_alloc_mem_(*data, options, *length * memsz, n * memsz);
     if (ptr == NULL) {
         return VEC_ERR_NO_MEMORY;
     }
@@ -58,29 +57,22 @@ int vec_reserve_(uint8_t **data, vec_size_t *options, const vec_size_t *length, 
 }
 
 
-int vec_reserve_po2_(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n) {
-  vec_size_t n2 = 1;
-  if (n == 0) {
-    return VEC_OK;
-  }
-  while (n2 < n) {
-    n2 <<= 1;
-  }
-  return vec_reserve_(data, options, length, capacity, memsz, n2);
-}
-
-
 int vec_compact_(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz) {
   if (*length == 0) {
-    VEC_FREE(*data);
+    if (*options & VEC_OWNS_MEMORY) {
+      VEC_FREE(*data);
+    }
     *data = NULL;
     *capacity = 0;
   } else {
-    void *ptr;
+    if (0 == (*options & VEC_ALLOW_REALLOC)) {
+      return VEC_ERR_NO_REALLOC;
+    }
+
     vec_size_t n = *length;
-    ptr = VEC_REALLOC(*data, n * memsz);
+    uint8_t *ptr = vec_alloc_mem_(*data, options, *capacity * memsz, n * memsz);
     if (ptr == NULL) {
-        return VEC_ERR_MEMORY;
+        return VEC_ERR_NO_MEMORY;
     }
     *capacity = n;
     *data = ptr;
@@ -90,7 +82,7 @@ int vec_compact_(uint8_t **data, vec_size_t *options, const size_t *length, vec_
 
 
 int vec_insert_(uint8_t **data, vec_size_t *options, size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx) {
-  int err = vec_expand_(data, length, capacity, memsz);
+  int err = vec_expand_(data, options, length, capacity, memsz);
   if (err != VEC_OK) {
     return err;
   }
@@ -120,6 +112,7 @@ void vec_swapsplice_(uint8_t *const *data, const vec_size_t *options, const size
 
 
 void vec_swap_(uint8_t *const *data, const vec_size_t *options, const vec_size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2) {
+  (void) options;
   (void) length;
   (void) capacity;
   uint8_t *a, *b, tmp;

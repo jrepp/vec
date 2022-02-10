@@ -1,53 +1,21 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "vec.h"
 #include "test_help.h"
-
-int pass_count = 0;
-int fail_count = 0;
-
-#define ITEM_NAME_SIZE 32
-
-typedef struct item_t {
-    int a;
-    int b;
-    char name[ITEM_NAME_SIZE];
-} item_t;
-
-typedef vec_t(item_t) vec_item_t;
 
 int intptrcmp(const void *a_, const void *b_) {
   const int *a = a_, *b = b_;
   return *a < *b ? -1 : *a > *b;
 }
 
-void test_assert_item(item_t *i, int a, int b, const char *s) {
-    test_assert(i->a == a);
-    test_assert(i->b == b);
-    test_assert(!strcmp(i->name, s));
-}
-
-int main(void) {
-
+int test_vec_ops() {
   { test_section("vec_push");
     vec_int_t v;
     vec_init(&v);
-    int i;
-    for (i = 0; i < 1000; i++) vec_push(&v, i * 2);
-    test_assert(v.data[1] == 2);
-    test_assert(v.data[999] == 999 * 2);
-    test_assert(vec_push(&v, 10) == 0);
-    vec_deinit(&v);
-  }
-
-  { test_section("vec_init_with");
-    int32_t arr[32];
-    vec_int_t v;
-    vec_init_with(&v, arr, vec_countof(arr));
-
+    test_assert(vec_available(&v) == 0);
+    test_assert(vec_empty(&v));
     for (int i = 0; i < 1000; i++) vec_push(&v, i * 2);
+    test_assert(vec_length(&v) == 1000);
+    test_assert(!vec_empty(&v));
+    test_assert(vec_capacity(&v) >= vec_length(&v));
+    test_assert(vec_available(&v) > 0);
     test_assert(v.data[1] == 2);
     test_assert(v.data[999] == 999 * 2);
     test_assert(vec_push(&v, 10) == 0);
@@ -57,6 +25,8 @@ int main(void) {
   { test_section("vec_pop");
     vec_int_t v;
     vec_init(&v);
+    test_assert(vec_pop(&v) == 0);
+    test_assert(vec_pop(&v) == 0);
     vec_push(&v, 123);
     vec_push(&v, 456);
     vec_push(&v, 789);
@@ -228,6 +198,9 @@ int main(void) {
     vec_compact(&v);
     test_assert(v.length == v.capacity);
     test_assert(vec_compact(&v) == 0);
+    vec_truncate(&v, 0);
+    vec_compact(&v);
+    test_assert(v.data == NULL);
     vec_deinit(&v);
   }
 
@@ -388,16 +361,6 @@ int main(void) {
     test_assert(acc == (19 + 2) * (31 + 1) * (47 + 0));
     vec_deinit(&v);
   }
-  { test_section("vec_custom_item");
-    vec_item_t v;
-    vec_init(&v);
-    item_t i = { 1, 2, "1" };
-    vec_push(&v, i);
-    test_assert_item(&vec_last(&v), 1, 2, "1");
-    vec_pop(&v);
-    vec_deinit(&v);
-  }
-  test_print_res();
 
   return 0;
 }

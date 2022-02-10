@@ -8,9 +8,24 @@
 #ifndef INCLUDED_VEC_H
 #define INCLUDED_VEC_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+//
+// Define VEC_CONFIG_H before including the vec.h header to override the default
+// definitions of allocation, size, alignment and vector growth.
+//
+#if !defined(VEC_CONFIG_H)
+#define VEC_CONFIG_H "vec_config_default.h"
+#endif
+
+#include VEC_CONFIG_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
 
 // See CMakeLists.txt and package.json
 #define VEC_VERSION "0.3.0"
@@ -32,37 +47,22 @@
 // item being indexed is not found
 #define VEC_NOT_FOUND ((vec_size_t)VEC_ERR)
 
-#define VEC_INIT_CAPACITY 8
-#define VEC_GROW_CAPACITY(n) (((n) << 1) + (n >> 1))
-
-// If a different size type is desired
-#if !defined(VEC_SIZE_TYPE)
-typedef size_t vec_size_t;
-#else
-typedef VEC_SIZE_TYPE vec_size_t;
-#endif
-
-//
-// Structure alignment helpers
-//
-#if defined(__GNUC__) || defined(__clang__)
-  #define VEC_PRE_ALIGN
-  #define VEC_POST_ALIGN __attribute__ ((aligned (8)))
-#elif defined(WIN32)
-  #define VEC_PRE_ALIGN __declspec(align(8))
-  #define VEC_POST_ALIGN
-#endif
-
-
 //
 // Options for vectors
 //
 #define VEC_OWNS_MEMORY 0x10
 #define VEC_ALLOW_REALLOC 0x20
 
+//
+// Combinations of options for vector initialization
+//
+#define VEC_DYNAMIC (VEC_OWNS_MEMORY|VEC_ALLOW_REALLOC)
+#define VEC_FIXED_REALLOC (VEC_ALLOW_REALLOC)
+#define VEC_FIXED (0)
+
 
 //
-// Count the dimensions of an array
+// Count the dimensions of a fixed array
 //
 #define vec_countof(arr) \
   (sizeof(arr) / sizeof(arr[0]))
@@ -71,21 +71,35 @@ typedef VEC_SIZE_TYPE vec_size_t;
 #define vec_unpack_(v) \
   (uint8_t**)&(v)->data, &(v)->options, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
 
+
 // Declare a new vector type
-#define vec_t(T, name) \
-  typedef struct { T *data; size_t options, length, capacity; } (name) VEC_POST_ALIGN
+#define vec_define_fields(T) \
+   T *data; size_t options, length, capacity;
 
 
 #define vec_init(v) \
-  (void) ((v)->data = NULL, (v)->length = 0, (v)->capacity = 0)
+  (void) ((v)->data = NULL, (v)->options = VEC_DYNAMIC, (v)->length = 0, (v)->capacity = 0)
 
 
-#define vec_init_with(v, ptr, capacity_) \
-  (void) ((v)->data = (ptr), (v)->length = 0, (v)->capacity = (capacity_))
+#define vec_init_with_fixed(v, ptr, capacity_) \
+  (void) ((v)->data = (ptr), (v)->options = VEC_FIXED, (v)->length = 0, (v)->capacity = (capacity_))
+
+
+#define vec_init_with_realloc(v, ptr, capacity_) \
+  (void) ((v)->data = (ptr), (v)->options = VEC_FIXED_REALLOC, (v)->length = 0, (v)->capacity = (capacity_))
 
 
 #define vec_deinit(v) \
-  ( ((v)->options & VEC_OWNS_MEMORY) ? VEC_FREE((v)->data) : (void)), vec_init(v) )
+  ( (((v)->options & VEC_OWNS_MEMORY) ? VEC_FREE((v)->data) : (void)0), vec_init(v) )
+
+
+#define vec_length(v) ((v)->length)
+
+
+#define vec_capacity(v) ((v)->capacity)
+
+
+#define vec_available(v) ((v)->capacity - (v)->length)
 
 
 #define vec_push(v, val)                  \
@@ -177,8 +191,8 @@ typedef VEC_SIZE_TYPE vec_size_t;
 
 #define vec_pusharr(v, arr, count)                                       \
   do {                                                                   \
-    vec_size_t i__, n__ = (count);                                           \
-    if (vec_reserve_po2_(vec_unpack_(v), (v)->length + n__) != 0) break; \
+    vec_size_t i__, n__ = (count);                                       \
+    if (vec_reserve_(vec_unpack_(v), (v)->length + n__) != 0) break;     \
     for (i__ = 0; i__ < n__; i__++) {                                    \
       (v)->data[(v)->length++] = (arr)[i__];                             \
     }                                                                    \
@@ -253,40 +267,36 @@ typedef VEC_SIZE_TYPE vec_size_t;
          --(iter))
 
 
+int VEC_API(vec_expand_)(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
-#if defined(VEC_FREE) && defined(VEC_REALLOC)
-    // Both defined, no error
-#elif !defined(VEC_REALLOC) && !defined(VEC_FREE)
-    // Neither defined, use stdlib
-    #define VEC_FREE free
-    #define VEC_REALLOC realloc
-#else
-    #error "Must define all or none of VEC_FREE and VEC_REALLOC."
+int VEC_API(vec_reserve_)(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
+
+int VEC_API(vec_compact_)(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
+
+int VEC_API(vec_insert_)(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx);
+
+void VEC_API(vec_splice_)(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
+
+void VEC_API(vec_swapsplice_)(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
+
+void VEC_API(vec_swap_)(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2);
+
+//
+// Pre-defined stand-alone vector structure types
+//
+// All that is required to use the vector APIs is to have the vector fields in your type
+// by passing a pointer to your type the fields will be expanded into the API
+//
+typedef VEC_PRE_ALIGN struct { vec_define_fields(void*) } vec_void_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(char*) } vec_str_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(int) } vec_int_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(char) } vec_char_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(float) } vec_float_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(double) } vec_double_t VEC_POST_ALIGN;
+
+
+#if defined(__cplusplus)
+}
 #endif
-
-
-int vec_expand_(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
-
-int vec_reserve_(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
-
-int vec_reserve_po2_(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t n);
-
-int vec_compact_(uint8_t **data, const vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
-
-int vec_insert_(uint8_t **data, vec_size_t *options, vec_size_t *length, vec_size_t *capacity, vec_size_t memsz, vec_size_t idx);
-
-void vec_splice_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
-
-void vec_swapsplice_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t start, vec_size_t count);
-
-void vec_swap_(uint8_t *const *data, const vec_size_t *options, const size_t *length, const vec_size_t *capacity, vec_size_t memsz, vec_size_t idx1, vec_size_t idx2);
-
-
-vec_t(void*, vec_void_t);
-vec_t(char*, vec_str_t);
-vec_t(int, vec_int_t);
-vec_t(char, vec_char_t);
-vec_t(float, vec_float_t);
-vec_t(double, vec_double_t);
 
 #endif // INCLUDED_VEC_H
