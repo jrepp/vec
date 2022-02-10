@@ -55,7 +55,7 @@ typedef VEC_SIZE_TYPE vec_size_t;
 
 
 #define vec_pop(v) \
-  (v)->data[--(v)->length]
+  ((v)->length > 0 ? (--(v)->length) : 0)
 
 
 #define vec_splice(v, start, count)\
@@ -109,6 +109,10 @@ typedef VEC_SIZE_TYPE vec_size_t;
 
 #define vec_first(v) \
   ((v)->data[0])
+
+
+#define vec_empty(v) \
+  ((v)->length == 0)
 
 
 #define vec_last(v) \

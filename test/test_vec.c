@@ -48,9 +48,9 @@ int main(void) {
     vec_push(&v, 123);
     vec_push(&v, 456);
     vec_push(&v, 789);
-    test_assert(vec_pop(&v) == 789);
-    test_assert(vec_pop(&v) == 456);
-    test_assert(vec_pop(&v) == 123);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 789 && vec_pop(&v) == 2);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 456 && vec_pop(&v) == 1);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 123 && vec_pop(&v) == 0);
     vec_deinit(&v);
   }
 
