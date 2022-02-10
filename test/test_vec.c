@@ -3,39 +3,31 @@
 #include <string.h>
 
 #include "vec.h"
-
-
-#define test_section(desc)\
-  do {\
-    printf("--- %s\n", desc);\
-  } while (0)
-
-#define test_assert(cond)\
-  do {\
-    int pass__ = cond;\
-    printf("[%s] %s:%d: ", pass__ ? "PASS" : "FAIL", __FILE__, __LINE__);\
-    printf((strlen(#cond) > 50 ? "%.47s...\n" : "%s\n"), #cond);\
-    if (pass__) { pass_count++; } else { fail_count++; }\
-  } while (0)
-
-#define test_print_res()\
-  do {\
-    printf("------------------------------------------------------------\n");\
-    printf("-- Results:   %3d Total    %3d Passed    %3d Failed       --\n",\
-           pass_count + fail_count, pass_count, fail_count);\
-    printf("------------------------------------------------------------\n");\
-  } while (0)
+#include "test_help.h"
 
 int pass_count = 0;
 int fail_count = 0;
 
+#define ITEM_NAME_SIZE 32
+
+typedef struct item_t {
+    int a;
+    int b;
+    char name[ITEM_NAME_SIZE];
+} item_t;
+
+typedef vec_t(item_t) vec_item_t;
 
 int intptrcmp(const void *a_, const void *b_) {
   const int *a = a_, *b = b_;
   return *a < *b ? -1 : *a > *b;
 }
 
-
+void test_assert_item(item_t *i, int a, int b, const char *s) {
+    test_assert(i->a == a);
+    test_assert(i->b == b);
+    test_assert(!strcmp(i->name, s));
+}
 
 int main(void) {
 
@@ -56,9 +48,9 @@ int main(void) {
     vec_push(&v, 123);
     vec_push(&v, 456);
     vec_push(&v, 789);
-    test_assert(vec_pop(&v) == 789);
-    test_assert(vec_pop(&v) == 456);
-    test_assert(vec_pop(&v) == 123);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 789 && vec_pop(&v) == 2);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 456 && vec_pop(&v) == 1);
+    test_assert(!vec_empty(&v) && vec_last(&v) == 123 && vec_pop(&v) == 0);
     vec_deinit(&v);
   }
 
@@ -368,7 +360,15 @@ int main(void) {
     test_assert(acc == (19 + 2) * (31 + 1) * (47 + 0));
     vec_deinit(&v);
   }
-
+  { test_section("vec_custom_item");
+    vec_item_t v;
+    vec_init(&v);
+    item_t i = { 1, 2, "1" };
+    vec_push(&v, i);
+    test_assert_item(&vec_last(&v), 1, 2, "1");
+    vec_pop(&v);
+    vec_deinit(&v);
+  }
   test_print_res();
 
   return 0;
