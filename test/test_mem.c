@@ -26,23 +26,32 @@ static int force_fail_realloc = 0;
 static mem_header_t *regions = NULL;
 
 
-static void assert_valid_pattern(uint8_t *pattern, size_t size, uint8_t byte) {
+static int assert_valid_pattern(uint8_t *pattern, size_t size, uint8_t byte) {
   for (size_t i = 0; i < size; ++i) {
     assert(pattern[i] == byte);
+    if (pattern[i] != byte) {
+      return -1;
+    }
   }
+  return 0;
 }
 
-static void assert_valid_header(mem_header_t *header) {
+static int assert_valid_header(mem_header_t *header) {
   for (const mem_header_t *check = regions; check; check = check->next) {
     if (check == header) {
-      return;
+      return 0;
     }
   }
   assert(!"header was not found in valid regions");
+  return -1;
 }
 
-static void assert_allocation_size(mem_header_t *header, mem_footer_t *footer) {
+static int assert_allocation_size(mem_header_t *header, mem_footer_t *footer) {
   assert((ptrdiff_t)header->size == ((uint8_t*)footer - (uint8_t*)(header + 1)));
+  if((ptrdiff_t)header->size == ((uint8_t*)footer - (uint8_t*)(header + 1))) {
+    return 0;
+  }
+  return -1;
 }
 
 void set_fail_malloc(int enable) {
@@ -113,12 +122,18 @@ void *test_realloc(void *existing_request, size_t bytes) {
     }
   }
   assert(active_region == 1);
+  if (!active_region) {
+    return NULL;
+  }
 
   // Reallocate into a new region
   const size_t header_seq = header->sequence;
   const size_t header_size = header->size;
   uint8_t *new_region = (uint8_t*)realloc((void *)header, bytes + sizeof(mem_header_t) + sizeof(mem_footer_t));
   assert(new_region != NULL);
+  if (new_region == NULL) {
+    return NULL;
+  }
   stats_->realloc_count++;
 
   // Adjust memory stats
