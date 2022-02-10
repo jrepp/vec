@@ -42,6 +42,18 @@ int main(void) {
     vec_deinit(&v);
   }
 
+  { test_section("vec_init_with");
+    int32_t arr[32];
+    vec_int_t v;
+    vec_init_with(&v, arr, vec_countof(arr));
+
+    for (int i = 0; i < 1000; i++) vec_push(&v, i * 2);
+    test_assert(v.data[1] == 2);
+    test_assert(v.data[999] == 999 * 2);
+    test_assert(vec_push(&v, 10) == 0);
+    vec_deinit(&v);
+  }
+
   { test_section("vec_pop");
     vec_int_t v;
     vec_init(&v);
@@ -264,6 +276,22 @@ int main(void) {
     vec_find(&v, 'd', i);
     test_assert(i == 3);
     vec_find(&v, '_', i);
+    test_assert(i == VEC_NOT_FOUND);
+    vec_deinit(&v);
+  }
+
+  { test_section("vec_rfind");
+    vec_int_t v;
+    vec_init(&v);
+    size_t i;
+    for (i = 0; i < 26; i++) vec_push(&v, 'a' + i);
+    vec_rfind(&v, 'a', i);
+    test_assert(i == 0);
+    vec_rfind(&v, 'z', i);
+    test_assert(i == 25);
+    vec_rfind(&v, 'd', i);
+    test_assert(i == 3);
+    vec_rfind(&v, '_', i);
     test_assert(i == VEC_NOT_FOUND);
     vec_deinit(&v);
   }
