@@ -4,53 +4,73 @@ A type-safe dynamic array implementation for C.
 ![build workflow](https://github.com/jrepp/vec/actions/workflows/cmake.yml/badge.svg)
 
 
+## Features
+
+* MIT License
+* Modular - configure allocation size, functions and behaviour
+* Small
+* Type-safe
+* Effecient
+* 100% test coverage
+
+
 ## Installation 
 The [vec.c](src/vec.c?raw=1) and [vec.h](src/vec.h?raw=1) files can be dropped
-into an existing C project and compiled along with it.
+into an existing C project and compiled along with it. If no overrides are required,
+[vec_config_default.h](src/vec_config_default.h?raw=1) should also be supplied.
 
 
 ## Usage
 Before using a vector it should first be initialised using the `vec_init()`
-function.
+function. To release vector memory ensure that `vec\_deinit()` is always called.
 ```c
 vec_int_t v;
 vec_init(&v);
 vec_push(&v, 123);
 vec_push(&v, 456);
+vec_deinit(&v);
 ```
 
 To access the elements of the vector directly the vector's `data` field can be
 used.
 ```c
-printf("%d\n", v.data[1]); /* Prints the value at index 1 */
+if (vec_length(&v) >= 2)
+  printf("%d\n", v.data[1]); /* Prints the value at index 1 */
 ```
 
-The current length of the vector is stored in the `length` field of the vector
+The vector memory can be queried using helper macros.
 ```c
-printf("%d\n", v.length); /* Prints the length of the vector */
+printf("%zu\n", vec_length(&v)); /* Prints the length of the vector */
+printf("%zu\n", vec_capacity(&v)); /* Prints the capacity of the vector */
+printf("%zu\n", vec_available(&v)); /* Prints the available elements of the vector */
 ```
 
-When you are done with the vector the `vec_deinit()` function should be called
-on it. This will free any memory the vector allocated during use.
-```c
-vec_deinit(&v);
-```
+## Configuring
+Configuration is available through the VEC_CONFIG_H compile option. There are overrides for
 
-To use your own custom memory allocator, define both `VEC_FREE` and `VEC_REALLOC`
-before including `vec.h`, and they will be used instead of the standard library's
-`free` and `realloc`. 
+* Array allocation strategy:`VEC_INIT_CAPACITY`, `VEC_GROW_CAPACITY`
+* Memory allocation: `VEC_MALLOC`, `VEC_FREE`, `VEC_REALLOC`
+* Array sizes types: `vec_size_t`
+* Structure alignment: `VEC_PRE_ALIGN`, `VEC_POST_ALIGN`
+* API function call semantics: `VEC_API`
+
 
 ## Types
 vec.h provides the following predefined vector types:
 
-| Contained Type  | Type name     |
-|-----------------|---------------|
-| void*           | vec_void_t    |
-| char*           | vec_str_t     |
-| int             | vec_int_t     |
-| char            | vec_char_t    |
-| float           | vec_float_t   |
-| double          | vec_double_t  |
+| Contained Type | Type name    |
+|----------------|--------------|
+| void*          | vec_void_t   |
+| char*          | vec_str_t    |
+| int_t          | vec_int_t    |
+| int32_t        | vec_int32_t  |
+| uint32_t       | vec_uint32_t |
+| int64_t        | vec_int64_t  |
+| uint64_t       | vec_uint64_t |
+| char           | vec_char_t   |
+| uint8_t        | vec_uint8_t  |
+| float          | vec_float_t  |
+| double         | vec_double_t |
 
 To define a new vector type the `vec_t()` macro should be used:
 ```c
@@ -64,15 +84,37 @@ All vector functions are macro functions. The parameter `v` in each function
 should be a pointer to the vec struct which the operation is to be performed
 on.
 
-### vec\_t(T)
-Creates a vec struct for containing values of type `T`.
+### vec\_define\_fields(T)
+Embeds the required vec structure fields for values of type `T`.
 ```c
-/* Typedefs the struct `fp_vec_t` as a container for type FILE* */
-typedef vec_t(FILE*) fp_vec_t;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(double) } vec_double_t VEC_POST_ALIGN;
 ```
+
+Fields can be embedded in any struct - additional fields can be defined
+and will not be affected by the vec API. See [test_vec_custom.c](test/test_vec_custom.c?raw=1) for an example.
 
 ### vec\_init(v)
 Initialises the vector, this must be called before the vector can be used. 
+
+### vec\_init_with_fixed(v, ptr, capacity)
+Initialises with a pre-existing fixed allocation
+
+Fixed vectors Will not reallocate if the capacity is exhausted.
+```c
+int arr[32];
+vec_int_t v;
+vec_init_with_fixed(&v, &arr[0], vec_countof(arr));
+```
+
+### vec\_init_with_realloc(v, ptr, capacity)
+Initialises with a pre-existing fixed allocation, allowing reallocation.
+
+When capacity is exceeded the vector will allocate a new larger buffer.
+```c
+int arr[32];
+vec_int_t v;
+vec_init_with_realloc(&v, &arr[0], vec_countof(arr));
+```
 
 ### vec\_deinit(v)
 Deinitialises the vector, freeing the memory the vector allocated during use;
@@ -83,7 +125,8 @@ Pushes a value to the end of the vector. Returns 0 if the operation was
 successful, otherwise -1 is returned and the vector remains unchanged.
 
 ### vec\_pop(v)
-Removes and returns the value at the end of the vector.
+Removes the last element and returns the length of the vector. Will return
+0 on empty array.
 
 ### vec\_splice(v, start, count)
 Removes the number of values specified by `count`, starting at the index
@@ -164,6 +207,11 @@ Finds the first occurrence of the value `val` in the vector. `idx` should be an
 int where the value's index will be written; `idx` is set to -1 if `val` could
 not be found in the vector.
 
+### vec\_rfind(v, val, idx)
+Finds the last occurrence of the value `val` in the vector. `idx` should be an
+int where the value's index will be written; `idx` is set to -1 if `val` could
+not be found in the vector.
+
 ### vec\_remove(v, val)
 Removes the first occurrence of the value `val` from the vector. If the `val`
 is not contained in the vector then `vec_remove()` does nothing.
@@ -208,3 +256,4 @@ Iterates the value pointers of the vector from last to first. See
 ## License
 This library is free software; you can redistribute it and/or modify it under
 the terms of the MIT license. See [LICENSE](LICENSE) for details.
+

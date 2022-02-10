@@ -67,6 +67,7 @@ extern "C" {
 #define vec_countof(arr) \
   (sizeof(arr) / sizeof(arr[0]))
 
+
 // Given a vector unpack it into arguments for the vector helper functions
 #define vec_unpack_(v) \
   (uint8_t**)&(v)->data, &(v)->options, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
@@ -77,31 +78,38 @@ extern "C" {
    T *data; size_t options, length, capacity;
 
 
+// Initialize vector fields
 #define vec_init(v) \
   (void) ((v)->data = NULL, (v)->options = VEC_DYNAMIC, (v)->length = 0, (v)->capacity = 0)
 
 
+// Initialize with a fixed vector, no reallocation
 #define vec_init_with_fixed(v, ptr, capacity_) \
   (void) ((v)->data = (ptr), (v)->options = VEC_FIXED, (v)->length = 0, (v)->capacity = (capacity_))
 
 
+// Initialize with a fixed vector, reallocate above capacity
 #define vec_init_with_realloc(v, ptr, capacity_) \
   (void) ((v)->data = (ptr), (v)->options = VEC_FIXED_REALLOC, (v)->length = 0, (v)->capacity = (capacity_))
 
 
+// Free vectory memory
 #define vec_deinit(v) \
   ( (((v)->options & VEC_OWNS_MEMORY) ? VEC_FREE((v)->data) : (void)0), vec_init(v) )
 
 
+// Length of vector in elements
 #define vec_length(v) ((v)->length)
 
 
+// Capacity of vector in elements
 #define vec_capacity(v) ((v)->capacity)
 
 
+// Availability of vector in elements
 #define vec_available(v) ((v)->capacity - (v)->length)
 
-
+// Push an element, returns VEC_OK or VEC_ERR
 #define vec_push(v, val)                  \
   ( vec_expand_(vec_unpack_(v))           \
      ? VEC_ERR                            \
@@ -112,15 +120,18 @@ extern "C" {
   )
 
 
+// Push an element, returns length of vector
 #define vec_pop(v) \
   ((v)->length > 0 ? (--(v)->length) : 0)
 
 
+// Splice the start and count of the vector, adjust length to specified count
 #define vec_splice(v, start, count)\
   ( vec_splice_(vec_unpack_(v), start, count),\
     (v)->length -= (count) )
 
 
+// Swap count elements from the end to the start index of the front of vector
 #define vec_swapsplice(v, start, count)\
   (                                               \
    vec_swapsplice_(vec_unpack_(v), start, count), \
@@ -128,6 +139,7 @@ extern "C" {
   )
 
 
+// Insert `val` at specified `idx`, adjust contents up
 #define vec_insert(v, idx, val)      \
   ( vec_insert_(vec_unpack_(v), idx) \
     ? VEC_ERR                        \
@@ -137,12 +149,14 @@ extern "C" {
        VEC_OK                        \
       )                              \
     )
-    
 
+
+// `qsort()` the contents using the given `fn`
 #define vec_sort(v, fn)\
   qsort((v)->data, (v)->length, sizeof(*(v)->data), fn)
 
 
+// `bsearch()` the contents using `key` and `fn` result in `idx`
 #define vec_bsearch(v, key, idx, fn)                                    \
   do {                                                                  \
     uint8_t* ptr = NULL;                                                \
@@ -153,30 +167,37 @@ extern "C" {
   } while (0)
 
 
+// Swap the elements at `idx1` and `idx2`
 #define vec_swap(v, idx1, idx2)\
   vec_swap_(vec_unpack_(v), idx1, idx2)
 
 
+// Truncate the vector to `len`
 #define vec_truncate(v, len) \
   ((v)->length = (len) < (v)->length ? (len) : (v)->length)
 
 
+// Truncate the vector to 0
 #define vec_clear(v) \
   ((v)->length = 0)
 
 
+// Return the first element (assumes length > 0)
 #define vec_first(v) \
   ((v)->data[0])
 
 
+// True when the vector is empty
 #define vec_empty(v) \
   ((v)->length == 0)
 
 
+// Returns the last element (assumes length > 0)
 #define vec_last(v) \
   ((v)->data[(v)->length - 1])
 
 
+// Reserve space for `n` elements
 #define vec_reserve(v, n)          \
   (vec_reserve_(vec_unpack_(v), n) \
     ? (VEC_ERR)                    \
@@ -184,11 +205,13 @@ extern "C" {
   )
 
 
+// Truncate the capacity of the vector to it's current length
 #define vec_compact(v) \
   (vec_compact_(vec_unpack_(v)) \
     ? VEC_ERR : VEC_OK)
 
 
+// Reserve and copy the values from a source array
 #define vec_pusharr(v, arr, count)                                       \
   do {                                                                   \
     vec_size_t i__, n__ = (count);                                       \
@@ -199,9 +222,12 @@ extern "C" {
   } while (0)
 
 
+// Extend vector `v` with the elements from `v2`
 #define vec_extend(v, v2)\
   vec_pusharr((v), (v2)->data, (v2)->length)
 
+
+// Find `val` in vector, populates `idx` with result
 #define vec_find(v, val, idx)\
   do {                                                \
     for ((idx) = 0; (idx) < (v)->length; (idx)++) {   \
@@ -211,6 +237,7 @@ extern "C" {
   } while (0)
 
 
+// Find `val` in vector, populates `idx` with result
 #define vec_rfind(v, val, idx)\
   do {                                                \
     for ((idx) = (v)->length - 1; (idx) < (v)->length; (idx)--) {   \
@@ -220,6 +247,7 @@ extern "C" {
   } while (0)
 
 
+// Remove an element from the vector by value
 #define vec_remove(v, val)                    \
   do {                                        \
     vec_size_t idx__;                             \
@@ -230,6 +258,7 @@ extern "C" {
   } while (0)
 
 
+// Reverse the contents of a vector
 #define vec_reverse(v)                             \
   do {                                             \
     vec_size_t i__ = (v)->length >> 1;                 \
@@ -238,7 +267,7 @@ extern "C" {
     }                                              \
   } while (0)
 
-
+// Iterate over each element of the vector, `var` is the element and `iter` is the index
 #define vec_foreach(v, var, iter)                                  \
   if ((v)->length > 0)                                             \
     for ((iter) = 0;                                               \
@@ -246,6 +275,7 @@ extern "C" {
          ++(iter))
 
 
+// Iterate over each element of the vector in reverse, `var` is the element and `iter` is the index
 #define vec_foreach_rev(v, var, iter)                     \
   if ((v)->length > 0)                                    \
     for ((iter) = (v)->length - 1;                        \
@@ -253,6 +283,7 @@ extern "C" {
          --(iter))
 
 
+// Iterate over each element of the vector, `var` is a pointer to the element and `iter` is the index
 #define vec_foreach_ptr(v, var, iter)                               \
   if ((v)->length > 0)                                              \
     for ((iter) = 0;                                                \
@@ -260,6 +291,7 @@ extern "C" {
          ++(iter))
 
 
+// Iterate over each element of the vector in reverse, `var` is the pointer to the element and `iter` is the index
 #define vec_foreach_ptr_rev(v, var, iter)                  \
   if ((v)->length > 0)                                     \
     for ((iter) = (v)->length - 1;                         \
@@ -290,7 +322,12 @@ void VEC_API(vec_swap_)(uint8_t *const *data, const vec_size_t *options, const s
 typedef VEC_PRE_ALIGN struct { vec_define_fields(void*) } vec_void_t VEC_POST_ALIGN;
 typedef VEC_PRE_ALIGN struct { vec_define_fields(char*) } vec_str_t VEC_POST_ALIGN;
 typedef VEC_PRE_ALIGN struct { vec_define_fields(int) } vec_int_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(int32_t) } vec_int32_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(uint32_t) } vec_uint32_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(int64_t) } vec_int64_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(uint64_t) } vec_uint64_t VEC_POST_ALIGN;
 typedef VEC_PRE_ALIGN struct { vec_define_fields(char) } vec_char_t VEC_POST_ALIGN;
+typedef VEC_PRE_ALIGN struct { vec_define_fields(uint8_t) } vec_uint8_t VEC_POST_ALIGN;
 typedef VEC_PRE_ALIGN struct { vec_define_fields(float) } vec_float_t VEC_POST_ALIGN;
 typedef VEC_PRE_ALIGN struct { vec_define_fields(double) } vec_double_t VEC_POST_ALIGN;
 
