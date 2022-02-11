@@ -53,7 +53,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 include(cmake/CodeCoverage.cmake)
-if (VEC_ENABLE_CODE_COVERAGE AND LCOV_PATH)
+if (VEC_ENABLE_CODE_COVERAGE AND GCOVR_PATH)
     message(STATUS "Code coverage support enabled")
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_xml(
