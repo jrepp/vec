@@ -3,6 +3,7 @@
 extern int test_vec_ops();
 extern int test_vec_custom();
 extern int test_vec_fixed();
+extern int test_vec_functional();
 extern int test_vec_mem_failures();
 
 typedef int (*test_func)(void);
@@ -16,7 +17,8 @@ test_suite_t tests[] = {
   { "vec_ops", test_vec_ops },
   { "vec_custom", test_vec_custom },
   { "vec_fixed", test_vec_fixed },
-  { "vec_mem_failures", test_vec_mem_failures }
+  { "vec_functional", test_vec_functional },
+  { "vec_mem_failures", test_vec_mem_failures },
 };
 
 int main() {

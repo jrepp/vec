@@ -1,8 +1,10 @@
 /** 
- * Copyright (c) 2014 rxi
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
  *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the MIT license. See LICENSE for details.
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
  */
 
 #ifndef INCLUDED_VEC_H
@@ -304,6 +306,40 @@ extern "C" {
          (iter) >= 0 && (((var) = &(v)->data[(iter)]), 1); \
          --(iter))
 
+
+// Apply function f(v->data[i])) to each element of v in-place
+#define vec_map_inplace(v, f) \
+  for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
+    (v)->data[i__] = (f)((v)->data[i__]); \
+  }
+
+
+// Apply functional transform f(v->data[i], &v2->data[i]) to each element of v
+#define vec_map(v, v2, f) \
+  do {                    \
+    vec_reserve((v2), vec_length(v)); \
+    (v2)->length = (v)->length; \
+    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
+      (v2)->data[i__] = (f)((v)->data[i__]);                        \
+    } \
+  } while(0);
+
+
+// Apply functional fold to ov = f(v->data[i], ov) for each element of v
+#define vec_fold(v, ov, f) \
+  do {                     \
+    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
+      ov = (f)(ov, (v)->data[i__]);                       \
+    } \
+  } while(0);
+
+// Apply expression fold to (expr) (v->data[i]) for each element of v
+#define vec_fold_expr(v, expr) \
+  do {                     \
+    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
+      expr ((v)->data[i__]);                       \
+    } \
+  } while(0);
 
 int VEC_API(vec_expand_)(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
 

@@ -33,6 +33,7 @@ set(VEC_TEST_SOURCES
         test/test_stats.c
         test/test_vec_custom.c
         test/test_vec_fixed.c
+        test/test_vec_functional.c
         test/test_vec_ops.c
         test/test_mem.c
         test/test_vec_mem_failures.c
