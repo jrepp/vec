@@ -50,8 +50,9 @@ extern "C" {
 //
 // Options for vectors
 //
-#define VEC_OWNS_MEMORY 0x10
-#define VEC_ALLOW_REALLOC 0x20
+#define VEC_OWNS_MEMORY     0x10
+#define VEC_ALLOW_REALLOC   0x20
+#define VEC_OOM             0x01
 
 //
 // Combinations of options for vector initialization
@@ -104,6 +105,11 @@ extern "C" {
 
 // Capacity of vector in elements
 #define vec_capacity(v) ((v)->capacity)
+
+
+// True when the vector has observed an oom condition, useful for error checking
+// after batch operations such as pusharr that don't have a natural return code.
+#define vec_oom(v) (((v)->options & VEC_OOM) == VEC_OOM)
 
 
 // Availability of vector in elements

@@ -16,6 +16,7 @@ int test_vec_mem_failures() {
     vec_init_with_realloc(&v, &arr[0], vec_countof(arr));
     set_fail_malloc(1);
     test_assert(VEC_ERR == vec_reserve(&v, 1000));
+    test_assert(vec_oom(&v));
     test_assert(vec_countof(arr) == vec_capacity(&v));
     test_assert(VEC_OK == vec_push(&v, 1111));
     test_assert(v.data[0] == 1111);
@@ -108,6 +109,48 @@ int test_vec_mem_failures() {
     set_fail_malloc(0);
     vec_deinit(&v);
   }
+  { test_section("vec_pusharr_failure");
+    vec_int_t v;
+    vec_init(&v);
+    int values[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    set_fail_malloc(1);
+    vec_pusharr(&v, values, vec_countof(values));
+    test_assert(vec_oom(&v));
+    v.options &= ~VEC_OOM;
+    test_assert(!vec_oom(&v));
+    set_fail_malloc(0);
+    vec_pusharr(&v, values, vec_countof(values));
+    test_assert(!vec_oom(&v));
+    set_fail_realloc(1);
+    vec_pusharr(&v, values, vec_countof(values));
+    set_fail_realloc(0);
+    test_assert(vec_oom(&v));
+    vec_deinit(&v);
+  }
+  { test_section("vec_extend_failure");
+    vec_int_t v;
+    vec_init(&v);
+
+    int values[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    vec_int_t v2;
+    vec_init_with_fixed(&v2, values, vec_countof(values));
+    v2.length = vec_countof(values);
+
+    set_fail_malloc(1);
+    vec_extend(&v, &v2);
+    test_assert(vec_oom(&v));
+    v.options &= ~VEC_OOM;
+    test_assert(!vec_oom(&v));
+    set_fail_malloc(0);
+    vec_extend(&v, &v2);
+    test_assert(!vec_oom(&v));
+    set_fail_realloc(1);
+    vec_extend(&v, &v2);
+    set_fail_realloc(0);
+    test_assert(vec_oom(&v));
+    vec_deinit(&v);
+  }
+
   { test_section("vec_compact_failure");
     test_assert(stats_->memory == 0);
     vec_int_t v;
