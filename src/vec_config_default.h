@@ -1,7 +1,3 @@
-//
-// Created by Jacob on 2/10/22.
-//
-
 #ifndef INCLUDED_VEC_CONFIG_DEFAULT_H
 #define INCLUDED_VEC_CONFIG_DEFAULT_H
 #include <stddef.h>
