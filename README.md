@@ -21,7 +21,7 @@ into an existing C project and compiled along with it. If no overrides are requi
 
 ## Usage
 Before using a vector it should first be initialised using the `vec_init()`
-function. To release vector memory ensure that `vec\_deinit()` is always called.
+function. To release vector memory ensure that `vec_deinit()` is always called.
 ```c
 vec_int_t v;
 vec_init(&v);
@@ -71,10 +71,18 @@ vec.h provides the following predefined vector types:
 | float          | vec_float_t  |
 | double         | vec_double_t |
 
-To define a new vector type the `vec_t()` macro should be used:
+To define a new vector type the `vec_define_fields()` macro should be used:
 ```c
 /* Creates the type uint_vec_t for storing unsigned ints */
-typedef vec_t(unsigned int) uint_vec_t;
+typedef struct { vec_define_fields(unsigned int) } uint_vec_t;
+
+/* Add vector functionality to a model chunk type */
+typedef struct { float x, y, z } point3f_t;
+struct vec_chunk {
+  struct vec_chunk *next;
+  chunk_header_t header;
+  vec_define_fields(point3f_t);
+} vec_chunk_t;
 ```
 
 
