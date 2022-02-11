@@ -56,7 +56,7 @@ include(cmake/CodeCoverage.cmake)
 if (VEC_ENABLE_CODE_COVERAGE AND LCOV_PATH)
     message(STATUS "Code coverage support enabled")
     append_coverage_compiler_flags()
-    setup_target_for_coverage_lcov(
+    setup_target_for_coverage_gcovr_xml(
             NAME coverage
             EXECUTABLE test_vec
             EXCLUDE "${PROJECT_SOURCE_DIR}/src/test/*")
