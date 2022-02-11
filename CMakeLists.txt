@@ -59,7 +59,7 @@ if (VEC_ENABLE_CODE_COVERAGE AND GCOVR_PATH)
     setup_target_for_coverage_gcovr_xml(
             NAME coverage
             EXECUTABLE test_vec
-            EXCLUDE "${PROJECT_SOURCE_DIR}/src/test/*")
+            EXCLUDE "${PROJECT_SOURCE_DIR}/test/*")
 else()
     message(STATUS "Code coverage support disabled")
 endif()

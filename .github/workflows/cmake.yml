@@ -9,6 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
+  CODECOV_TOKEN: 2d9bd8d9-78b2-46be-9284-8d7702dd26f0
 
 jobs:
   build:
