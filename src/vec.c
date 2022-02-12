@@ -1,8 +1,10 @@
 /** 
- * Copyright (c) 2014 rxi
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
  *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the MIT license. See LICENSE for details.
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
  */
 
 #include "vec.h"
@@ -17,6 +19,7 @@ static uint8_t *vec_alloc_mem_(uint8_t *existing, vec_size_t *options, size_t ex
       *options |= VEC_OWNS_MEMORY;
       return new_region;
     }
+    *options |= VEC_OOM;
     return NULL;
   }
 
@@ -31,7 +34,8 @@ int vec_expand_(uint8_t **data, vec_size_t *options, const vec_size_t *length, v
     size_t new_capacity = (*capacity == 0) ? VEC_INIT_CAPACITY : VEC_GROW_CAPACITY(*capacity);
     uint8_t* ptr = vec_alloc_mem_(*data, options, *length * memsz, new_capacity * memsz);
     if (ptr == NULL) {
-        return VEC_ERR_NO_MEMORY;
+      *options |= VEC_OOM;
+      return VEC_ERR_NO_MEMORY;
     }
     *data = ptr;
     *capacity = new_capacity;
@@ -48,7 +52,8 @@ int vec_reserve_(uint8_t **data, vec_size_t *options, const vec_size_t *length, 
     }
     uint8_t *ptr = vec_alloc_mem_(*data, options, *length * memsz, n * memsz);
     if (ptr == NULL) {
-        return VEC_ERR_NO_MEMORY;
+      *options |= VEC_OOM;
+      return VEC_ERR_NO_MEMORY;
     }
     *data = ptr;
     *capacity = n;
@@ -72,7 +77,8 @@ int vec_compact_(uint8_t **data, vec_size_t *options, const size_t *length, vec_
     vec_size_t n = *length;
     uint8_t *ptr = vec_alloc_mem_(*data, options, *capacity * memsz, n * memsz);
     if (ptr == NULL) {
-        return VEC_ERR_NO_MEMORY;
+      *options |= VEC_OOM;
+      return VEC_ERR_NO_MEMORY;
     }
     *capacity = n;
     *data = ptr;

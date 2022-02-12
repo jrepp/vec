@@ -1,7 +1,3 @@
-//
-// Created by Jacob on 2/9/22.
-//
-
 #ifndef VEC_TEST_VEC_CONFIG_H
 #define VEC_TEST_VEC_CONFIG_H
 
