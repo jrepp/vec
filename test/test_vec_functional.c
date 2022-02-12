@@ -1,6 +1,6 @@
 #include "test_help.h"
 
-static const int count = 1000;
+static const vec_size_t count = 1000;
 
 static int64_t power(int64_t value) {
   return value * 10;
@@ -11,7 +11,7 @@ static int64_t sum(int64_t out, int64_t in) {
 }
 
 static void fill_vec(vec_int64_t *v) {
-  for (int64_t i = 0; i < count; ++i) {
+  for (int64_t i = 0; i < (int64_t)count; ++i) {
     if (VEC_OK != vec_push(v, i)) {
       break;
     }
