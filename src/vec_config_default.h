@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
+ */
+
 #ifndef INCLUDED_VEC_CONFIG_DEFAULT_H
 #define INCLUDED_VEC_CONFIG_DEFAULT_H
 #include <stddef.h>
@@ -16,14 +25,16 @@ typedef VEC_SIZE_TYPE vec_size_t;
 #define VEC_API(name) name
 
 //
-// Structure alignment helpers
+// Structure alignment and typeof helpers
 //
 #if defined(__GNUC__) || defined(__clang__)
-#define VEC_PRE_ALIGN
-#define VEC_POST_ALIGN __attribute__ ((aligned (8)))
+  #define VEC_PRE_ALIGN
+  #define VEC_POST_ALIGN __attribute__ ((aligned (8)))
+  #define VEC_TYPEOF(v) __typeof__(v)
 #elif defined(WIN32)
-#define VEC_PRE_ALIGN __declspec(align(8))
+  #define VEC_PRE_ALIGN __declspec(align(8))
   #define VEC_POST_ALIGN
+  #define VEC_TYPEOF(v) decltype(v)
 #endif
 
 //

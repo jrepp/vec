@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
+ */
+
 #ifndef VEC_TEST_VEC_CONFIG_H
 #define VEC_TEST_VEC_CONFIG_H
 

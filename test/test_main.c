@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
+ */
+
 #include "test_help.h"
 
 extern int test_vec_ops();
@@ -22,8 +31,9 @@ test_suite_t tests[] = {
 };
 
 int main() {
-  test_stats_t stats;
+  test_stats_t stats, total_stats;
   test_stats_init(&stats);
+  test_stats_init(&total_stats);
   stats_ = &stats;
   int result = 0;
   for (size_t i = 0; i < vec_countof(tests); ++i) {
@@ -32,10 +42,20 @@ int main() {
     printf("------------------------------------------------------------\n");
     test_stats_init(stats_);
     if (0 != tests[i].func()) {
-      result = -1;
+      result = -2;
     }
-    test_stats_report(&stats);
+    test_stats_report(stats_);
     test_print_res();
+    test_stats_copy_forward(stats_, &total_stats);
+  }
+
+  printf("============================================================\n");
+  printf("Totals:\n");
+  test_stats_report(&total_stats);
+  stats_ = &total_stats;
+  test_print_res();
+  if (stats.fail_count > 0) {
+    return -1;
   }
 
   return result;
