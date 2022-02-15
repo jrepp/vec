@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2014 rxi (https://github.com/rxi/vec)
+ *
+ * v0.3.x modifications (c) 2022 Jacob Repp (https://github.com/jrepp/vec)
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT license. See https://github.com/rxi/vec/LICENSE for details.
+ */
+
 #ifndef INCLUDED_VEC_TEST_HELP_H
 #define INCLUDED_VEC_TEST_HELP_H
 
@@ -26,6 +35,7 @@ typedef struct {
 extern test_stats_t *stats_;
 void test_stats_init(test_stats_t *stats);
 void test_stats_report(const test_stats_t *stats);
+void test_stats_copy_forward(const test_stats_t *src, test_stats_t *dst);
 
 // controls for the test memory allocator (see test_mem.c)
 void set_fail_malloc(int enable);

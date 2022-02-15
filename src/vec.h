@@ -275,6 +275,21 @@ extern "C" {
     }                                              \
   } while (0)
 
+
+// Simply execute a function on each valid element of v
+#define vec_each(v, f, ...) \
+ for (vec_size_t i__ = 0, l__ = vec_length(v); i__ < l__; ++i__) { \
+    (void)f((v)->data[i__] , ## __VA_ARGS__ );  \
+  }
+
+
+// Simply execute a function on each valid element of v by pointer
+#define vec_each_ptr(v, f, ...) \
+ for (vec_size_t i__ = 0, l__ = vec_length(v); i__ < l__; ++i__) { \
+    (void)f(&((v)->data[i__]) , ## __VA_ARGS__ );     \
+  }
+
+
 // Iterate over each element of the vector, `var` is the element and `iter` is the index
 #define vec_foreach(v, var, iter)                                  \
   if ((v)->length > 0)                                             \
@@ -307,39 +322,102 @@ extern "C" {
          --(iter))
 
 
-// Apply function f(v->data[i])) to each element of v in-place
-#define vec_map_inplace(v, f) \
-  for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
-    (v)->data[i__] = (f)((v)->data[i__]); \
-  }
 
-
-// Apply functional transform f(v->data[i], &v2->data[i]) to each element of v
-#define vec_map(v, v2, f) \
+// Apply v2[i] = f(v[i], ...) for each element v
+#define vec_map(v, v2, f, ...) \
   do {                    \
-    vec_reserve((v2), vec_length(v)); \
+    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+      break;                   \
+    } \
     (v2)->length = (v)->length; \
-    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
-      (v2)->data[i__] = (f)((v)->data[i__]);                        \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
+                             *e__ = &(v)->data[(v)->length], \
+                             *d__ = &(v2)->data[0]; \
+    for (; s__ < e__; ++s__, ++d__) { \
+      *d__ = (f)(*s__ , ## __VA_ARGS__ );                        \
     } \
   } while(0);
 
 
-// Apply functional fold to ov = f(v->data[i], ov) for each element of v
-#define vec_fold(v, ov, f) \
+// Apply v2[i] = f(v[i], ...) for each element v in reverse
+#define vec_map_rev(v, v2, f, ...) \
+  do {                             \
+    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+      break;                                \
+    }; \
+    (v2)->length = (v)->length;    \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[(v)->length - 1], \
+                             *e__ = &(v)->data[-1], *d__ = &(v2)->data[0]; \
+    for (; s__ > e__; --s__, ++d__) { \
+      *d__ = (f)(*s__, ##__VA_ARGS__); \
+    } \
+  } while (0);
+
+
+// Apply v2[i] = f(&v[i], ...) for each element of v
+#define vec_map_ptr(v, v2, f, ...) \
+  do {                    \
+    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+      break;                         \
+    } \
+    (v2)->length = (v)->length; \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
+                             *e__ = &(v)->data[(v)->length], \
+                             *d__ = &(v2)->data[0]; \
+    for (; s__ < e__; ++s__, ++d__) { \
+      *d__ = (f)(s__, ## __VA_ARGS__ );                        \
+    } \
+  } while(0);
+
+
+// Apply v2[i] = f(&v[i], ...) for each element of v in reverse
+#define vec_map_ptr_rev(v, v2, f, ...) \
+  do {                                 \
+    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+      break;                               \
+    } \
+    (v2)->length = (v)->length; \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[(v)->length - 1], \
+                             *e__ = &(v)->data[-1],       \
+                             *d__ = &(v2)->data[0]; \
+    for (; s__ > e__; --s__, ++d__) { \
+      *d__ = (f)(s__, ##__VA_ARGS__); \
+    }                                    \
+  } while (0);
+
+
+// Apply ov = f(v[i], ov) for each element of v
+#define vec_fold(v, ov, f, ...) \
   do {                     \
-    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
-      ov = (f)(ov, (v)->data[i__]);                       \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
+                             *e__ = &(v)->data[(v)->length]; \
+    for (; s__ < e__; ++s__) { \
+      ov = (f)(ov, *s__ , ## __VA_ARGS__ );                       \
     } \
   } while(0);
 
-// Apply expression fold to (expr) (v->data[i]) for each element of v
-#define vec_fold_expr(v, expr) \
+
+// Apply ov = f(&v[i], ov) for each element of v
+#define vec_fold_ptr(v, ov, f, ...) \
   do {                     \
-    for (vec_size_t i__ = 0, l__ = (v)->length; i__ < l__; ++i__) { \
-      expr ((v)->data[i__]);                       \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
+                             *e__ = &(v)->data[(v)->length]; \
+    for (; s__ < e__; ++s__) { \
+      ov = (f)(ov, s__ , ## __VA_ARGS__ );                       \
     } \
   } while(0);
+
+
+// Apply (expr) (v[i]) for each element of v
+#define vec_fold_expr(v, expr, ...) \
+  do {                     \
+    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
+                             *e__ = &(v)->data[(v)->length]; \
+    for (; s__ < e__; ++s__) { \
+      expr (*s__ , ## __VA_ARGS__ );                       \
+    } \
+  } while(0);
+
 
 int VEC_API(vec_expand_)(uint8_t **data, vec_size_t *options, const size_t *length, vec_size_t *capacity, vec_size_t memsz);
 
