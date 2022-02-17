@@ -362,5 +362,24 @@ int test_vec_ops() {
     vec_deinit(&v);
   }
 
+  { test_section("vec_swap_data");
+    vec_int_t v, v2;
+    vec_init(&v);
+    vec_init(&v2);
+    vec_push(&v, 19);
+    vec_push(&v, 31);
+    vec_push(&v, 47);
+    vec_push(&v2, 78);
+    vec_swap_data(&v2, &v) ;
+    test_assert(v.data == NULL);
+    test_assert(vec_get(&v2, 0) == 19);
+    test_assert(vec_get(&v2, 1) == 31);
+    test_assert(vec_get(&v2, 2) == 47);
+    vec_swap_data(&v2, &v2);
+    test_assert(!vec_empty(&v2));
+    test_assert(vec_get(&v2, 2) == 47);
+    vec_deinit(&v2);
+  }
+
   return 0;
 }

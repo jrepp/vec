@@ -111,7 +111,7 @@ int test_vec_functional() {
     vec_init(&v2);
     fill_vec(&v);
     fill_vec(&v2);
-    vec_map(&v, &v2, power);
+    vec_map(&v2, &v, power);
     test_assert(v2.length == count);
     test_assert(is_ascending(&v2));
     test_assert(is_power(&v2));
@@ -125,7 +125,7 @@ int test_vec_functional() {
     vec_init(&v2);
     fill_vec(&v);
     fill_vec(&v2);
-    vec_map_ptr(&v, &v2, power_ptr);
+    vec_map_ptr(&v2, &v, power_ptr);
     test_assert(v2.length == count);
     test_assert(is_ascending(&v2));
     test_assert(is_power(&v2));
@@ -139,7 +139,7 @@ int test_vec_functional() {
     vec_init(&v2);
     fill_vec(&v);
     fill_vec(&v2);
-    vec_map_rev(&v, &v2, power);
+    vec_map_rev(&v2, &v, power);
     test_assert(v2.length == count);
     test_assert(is_descending(&v2));
     vec_deinit(&v);
@@ -152,7 +152,7 @@ int test_vec_functional() {
     vec_init(&v2);
     fill_vec(&v);
     fill_vec(&v2);
-    vec_map_ptr_rev(&v, &v2, power_ptr);
+    vec_map_ptr_rev(&v2, &v, power_ptr);
     test_assert(v2.length == count);
     test_assert(is_descending(&v2));
     vec_deinit(&v);

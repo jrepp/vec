@@ -236,17 +236,22 @@ current number of values. Returns 0 if the operation is successful, otherwise
 -1 is returned and the vector remains unchanged.
 
 
-## `vec_pusharr(v, arr, count)` / `vec_extend(v, v2)`
+## `vec_pusharr(v, arr, count)` / `vec_extend(dst, src)`
 Extend `v` by multiple source elements.
 
 Pushes the contents of the array `arr` or the vector `v2` to the end of the vector `v`. 
 
-This operation will grow the underlying array. If the reallocation fails the array
+These operations will grow the underlying array. If the reallocation fails the array
 will be partially filled and `vec_oom` will return `1`.
 
 
 ## `vec_oom(v)`
 Returns true when the underlying vector has experienced an out-of-memory condition.
+
+
+## `vec_swap_data(dst, src)`
+Swap the data from `src` into `dst`. Any data that exists in `dst` will be de-initialized and
+freed first. After the swap `src` will be initialized to an empty state.
 
 
 ## `vec_find(v, val, idx)` / `vec_rfind(v, val, inx)`
@@ -310,7 +315,7 @@ vec_each(&v, my_system, &arg);
 ```
 * `_ptr` takes the address of the value position as an argument to `f`
 
-## `vec_map[_ptr][_rev](v, v2, f, ...)`
+## `vec_map[_ptr][_rev](dst, src, f, ...)`
 `vec_map` allows mapping from one vector to another using a function and optional arguments. 
 
 Example:
@@ -318,10 +323,10 @@ Example:
 int convert(int x, int c) { /* transform x */ }
 vec_int_t v, v2;
 /* initialize and push values into v */
-vec_map(&v, &v2, convert, 100); /* converts each element in v -> v2 using the argument 100*/
+vec_map(&v2, &v, convert, 100); /* converts each element in v -> v2 using the argument 100*/
 ```
 * `_ptr` pass the value to the function by pointer
-* `_rev` reverses the iteration over `v`
+* `_rev` reverses the iteration over `src`
 * arguments after `f` are passed along after `v`
 
 
