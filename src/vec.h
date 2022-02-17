@@ -64,6 +64,14 @@ extern "C" {
 #define VEC_FIXED (0)
 
 
+// Optionally add assert into array access, the statement remains unchanged but
+// but will break before access the array out of bounds.
+#if defined(VEC_USE_CHECKED_ACCESS)
+#define VEC_CHECK(v, i) assert(i < (v)->length)
+#else
+#define VEC_CHECK(v, i) ((void)1)
+#endif // VEC_USE_CHECKED_ACCESS
+
 //
 // Count the dimensions of a fixed array
 //
@@ -190,19 +198,43 @@ extern "C" {
   ((v)->length = 0)
 
 
-// Return the first element (assumes length > 0)
-#define vec_first(v) \
-  ((v)->data[0])
-
-
 // True when the vector is empty
 #define vec_empty(v) \
   ((v)->length == 0)
 
 
+// Get an element at index
+#define vec_get(v, i) \
+  ((v)->data[(VEC_CHECK(v, i), i)])
+
+
+// Get an element by pointer at index
+#define vec_get_ptr(v, i) \
+  (&((v)->data[(VEC_CHECK(v, i), i)]))
+
+
+// Return the first element (assumes length > 0)
+#define vec_first(v) \
+  ((v)->data[(VEC_CHECK(v, 0), 0)])
+
+
 // Returns the last element (assumes length > 0)
 #define vec_last(v) \
-  ((v)->data[(v)->length - 1])
+  ((v)->data[(VEC_CHECK(v, (v)->length - 1), (v)->length - 1)])
+
+
+// Swap the data of src into dst, releasing dst before the swap
+#define vec_swap_data(dst, src)        \
+  do {                                 \
+    if (((dst)->data) == ((src)->data))    \
+      break;                           \
+    vec_deinit(dst);                   \
+    (dst)->data     = (src)->data;     \
+    (dst)->options  = (src)->options;  \
+    (dst)->length   = (src)->length;   \
+    (dst)->capacity = (src)->capacity; \
+    vec_init(src);                     \
+  } while(0);
 
 
 // Reserve space for `n` elements
@@ -324,62 +356,63 @@ extern "C" {
 
 
 // Apply v2[i] = f(v[i], ...) for each element v
-#define vec_map(v, v2, f, ...) \
+#define vec_map(dst, src, f, ...) \
   do {                    \
-    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+    if (VEC_OK != vec_reserve((dst), vec_length(src))) { \
       break;                   \
     } \
-    (v2)->length = (v)->length; \
-    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
-                             *e__ = &(v)->data[(v)->length], \
-                             *d__ = &(v2)->data[0]; \
+    (dst)->length = (src)->length; \
+    VEC_TYPEOF((src)->data[0]) *s__ = &(src)->data[0], \
+                               *e__ = &(src)->data[(src)->length], \
+                               *d__ = &(dst)->data[0]; \
     for (; s__ < e__; ++s__, ++d__) { \
       *d__ = (f)(*s__ , ## __VA_ARGS__ );                        \
     } \
   } while(0);
 
 
-// Apply v2[i] = f(v[i], ...) for each element v in reverse
-#define vec_map_rev(v, v2, f, ...) \
+// Apply dst[i] = f(src[i], ...) for each element v in reverse
+#define vec_map_rev(dst, src, f, ...) \
   do {                             \
-    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+    if (VEC_OK != vec_reserve((dst), vec_length(src))) { \
       break;                                \
     }; \
-    (v2)->length = (v)->length;    \
-    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[(v)->length - 1], \
-                             *e__ = &(v)->data[-1], *d__ = &(v2)->data[0]; \
+    (dst)->length = (src)->length;    \
+    VEC_TYPEOF((src)->data[0]) *s__ = &(src)->data[(src)->length - 1], \
+                               *e__ = &(src)->data[-1],  \
+                               *d__ = &(dst)->data[0]; \
     for (; s__ > e__; --s__, ++d__) { \
       *d__ = (f)(*s__, ##__VA_ARGS__); \
     } \
   } while (0);
 
 
-// Apply v2[i] = f(&v[i], ...) for each element of v
-#define vec_map_ptr(v, v2, f, ...) \
+// Apply dst[i] = f(&src[i], ...) for each element of v
+#define vec_map_ptr(dst, src, f, ...) \
   do {                    \
-    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+    if (VEC_OK != vec_reserve((dst), vec_length(src))) { \
       break;                         \
     } \
-    (v2)->length = (v)->length; \
-    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[0], \
-                             *e__ = &(v)->data[(v)->length], \
-                             *d__ = &(v2)->data[0]; \
+    (dst)->length = (src)->length; \
+    VEC_TYPEOF((src)->data[0]) *s__ = &(src)->data[0], \
+                               *e__ = &(src)->data[(src)->length], \
+                               *d__ = &(dst)->data[0]; \
     for (; s__ < e__; ++s__, ++d__) { \
       *d__ = (f)(s__, ## __VA_ARGS__ );                        \
     } \
   } while(0);
 
 
-// Apply v2[i] = f(&v[i], ...) for each element of v in reverse
-#define vec_map_ptr_rev(v, v2, f, ...) \
+// Apply dst[i] = f(&src[i], ...) for each element of v in reverse
+#define vec_map_ptr_rev(dst, src, f, ...) \
   do {                                 \
-    if (VEC_OK != vec_reserve((v2), vec_length(v))) { \
+    if (VEC_OK != vec_reserve((dst), vec_length(src))) { \
       break;                               \
     } \
-    (v2)->length = (v)->length; \
-    VEC_TYPEOF((v)->data[0]) *s__ = &(v)->data[(v)->length - 1], \
-                             *e__ = &(v)->data[-1],       \
-                             *d__ = &(v2)->data[0]; \
+    (dst)->length = (src)->length; \
+    VEC_TYPEOF((src)->data[0]) *s__ = &(src)->data[(src)->length - 1], \
+                               *e__ = &(src)->data[-1],       \
+                               *d__ = &(dst)->data[0];   \
     for (; s__ > e__; --s__, ++d__) { \
       *d__ = (f)(s__, ##__VA_ARGS__); \
     }                                    \

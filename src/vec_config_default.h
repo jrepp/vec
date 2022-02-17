@@ -24,6 +24,9 @@ typedef VEC_SIZE_TYPE vec_size_t;
 // Define any signature decoration for vector APIs
 #define VEC_API(name) name
 
+// Enable checking of raw array accesses, disable for performance
+#define VEC_USE_CHECKED_ACCESS 1
+
 //
 // Structure alignment and typeof helpers
 //

@@ -28,7 +28,12 @@ int test_vec_custom() {
     vec_init(&v);
     item_t i = { 1, 2, "1" };
     vec_push(&v, i);
-    test_assert_item(&vec_last(&v), 1, 2, "1");
+    i.a = 3, i.b = 4;
+    vec_push(&v, i);
+    test_assert_item(&vec_last(&v), 3, 4, "1");
+    test_assert_item(&vec_get(&v, 0), 1, 2, "1");
+    test_assert_item(&vec_first(&v), 1, 2, "1");
+    test_assert(&vec_get(&v, 1) == vec_get_ptr(&v, 1));
     vec_pop(&v);
     vec_deinit(&v);
 
