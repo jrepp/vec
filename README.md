@@ -3,9 +3,9 @@ A type-safe dynamic array implementation for C.
 
 Forked from the archived project: https://github.com/rxi/vec
 
-Merged some downstream contributions
-Cleaned up the docs
-Added tests and polish
+* Merged some downstream contributions
+* Cleaned up the docs
+* Added tests and polish
 
 ## Features
 
