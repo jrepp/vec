@@ -1,11 +1,16 @@
 # :signal_strength: vec
 A type-safe dynamic array implementation for C. 
 
+Forked from the archived project: https://github.com/rxi/vec
+
+Merged some downstream contributions
+Cleaned up the docs
+Added tests and polish
 
 ## Features
 
 * MIT License
-* Modular - configure allocation size, functions and behaviour
+* Modular - configure allocation size, functions, and behavior
 * Small
 * Type-safe
 * Efficient
@@ -21,7 +26,7 @@ into an existing C project and compiled along with it. If no overrides are requi
 
 
 ## Usage
-Before using a vector it should first be initialised using the `vec_init()`
+Before using a vector it should first be initialized using the `vec_init()`
 function. To release vector memory ensure that `vec_deinit()` is always called.
 ```c
 vec_int_t v;
@@ -99,9 +104,9 @@ struct vec_chunk {
 
 # API
 To preserve the type expression across calls, vector functions are macros. The parameter 
-`v` in each function must be a *pointer* to a structure which contains the vector fields. 
+`v` in each function must be a *pointer* to a structure that contains the vector fields. 
 Most APIs have a pointer version and may also have a reverse iteration option. The 
-arguments of each API are expanded in a macro, avoid side-effects in your arguments.
+arguments of each API are expanded in a macro, to avoid side effects in your arguments.
 
 Avoid side effects. The following actually increments `i` twice.
 ```c
@@ -123,12 +128,12 @@ and will not be affected by the vec API. See [test_vec_custom.c](test/test_vec_c
 ## `vec_init(v)`
 Initialize the fields of a vector, this must be called before the vector can be used. This function
 only clears the fields of the vector and does not allocate memory. If the fields of the 
-vector are contained in another structure simply using `memset(ptr, 0, sizeof(mystruct))`
+vector are contained in another structure simply use `memset(ptr, 0, sizeof(mystruct))`
 or `mystruct *p = calloc(1, sizeof(mystruct))` are sufficient.
 
 
 ## `vec_init_with_fixed(v, ptr, capacity)`
-Initialize the fields of a vector with a pre-existing fixed type array. This allocation will not be
+Initialize the fields of a vector with a pre-existing fixed-type array. This allocation will not be
 grown by default.
 ```c
 int arr[32];
@@ -139,7 +144,7 @@ assert(vec_capacity(&v) == vec_countof(arr))
 
 
 ## `vec_init_with_realloc(v, ptr, capacity)`
-Initialises the fields of a vector with a pre-existing fixed type array, allowing reallocation. When the
+Initializes the fields of a vector with a pre-existing fixed type array, allowing reallocation. When the
 length of the array exceeds the provided capacity the data will be reallocated preserving existing items.
 
 When capacity is exceeded the vector will allocate a new larger buffer.
@@ -153,7 +158,7 @@ assert(vec_length(&v) == 33);
 
 
 ## `vec_deinit(v)`
-De-initialises the vector, freeing the memory the vector allocated during use.
+De-initializes the vector, freeing the memory of the vector allocated during use.
 
 
 ## `vec_push(v, val)`
@@ -163,14 +168,14 @@ successful, otherwise `VEC_ERR` is returned and the vector remains unchanged.
 
 ## `vec_pop(v)`
 Removes the last element and returns the length of the vector. Will return
-0 on empty array.
+0 on an empty array.
 
 
 ## `vec_splice(v, start, count)`
 Removes the number of values specified by `count`, starting at the index
 `start`.
 ```c
-vec_splice(&v, 2, 4); /* Removes the values at indices 2, 3, 4 and 5 */
+vec_splice(&v, 2, 4); /* Removes the values at indices 2, 3, 4, and 5 */
 ```
 
 
@@ -199,7 +204,7 @@ function.
 ## `vec_bsearch(v, key, idx, fn)`
 Performs a binary search for `key` on the vector; the elements must be in sorted 
 order according to the qsort-compatible function `fn`. The value pointed to by
-`idx` is filled with index of `key` if found, -1 if not found.
+`idx` is filled with an index of `key` if found, -1 if not found.
 ```c
 /* Searches the vector for the key 4*/
 int key = 4;
@@ -226,7 +231,7 @@ vector as it performs a direct index into the data.
 ## `vec_reserve(v, n)`
 Reserves capacity for at least `n` elements in the given vector;  if `n` is
 less than the current capacity then `vec_reserve()` does nothing. Returns 0 if
-the operation was successful, otherwise -1 is returned and the vector remains
+the operation was successful, otherwise, -1 is returned and the vector remains
 unchanged.
 
 
@@ -258,7 +263,7 @@ freed first. After the swap `src` will be initialized to an empty state.
 Finds the first or last occurrence of the value `val` in the vector. 
 
 * `idx` should be an int where the value's index will be written; 
-* `idx` is set to VEC_NOT_FOUND if `val` could not be found in the vector.
+* `idx` is set to VEC_NOT_FOUND if `val` cannot be found in the vector.
 
 
 ## `vec_remove(v, val)`
@@ -272,7 +277,7 @@ containing `4, 5, 6` would contain `6, 5, 4` after reversing.
 
 
 ## `vec_foreach[_ptr][_rev](v, var, iter)`
-For-each macros expand to the initial portion of a for loop allowing in place
+For-each macro expand to the initial portion of a for loop allowing in-place
 ordered iteration forwards or reverse with the value and iterator (index) available
 locally for a loop body.
 
@@ -325,15 +330,15 @@ vec_int_t v, v2;
 /* initialize and push values into v */
 vec_map(&v2, &v, convert, 100); /* converts each element in v -> v2 using the argument 100*/
 ```
-* `_ptr` pass the value to the function by pointer
+* `_ptr` passes the value to the function by pointer
 * `_rev` reverses the iteration over `src`
 * arguments after `f` are passed along after `v`
 
 
 ## `vec_fold[_ptr](v, ov, f, ...)`
-`vec_fold` provides a type safe combination of the output value `ov` over the vector `v`
+`vec_fold` provides a type-safe combination of the output value `ov` over the vector `v`
 
-* `_ptr` pass the value to the fold function by pointer
+* `_ptr` passes the value to the fold function by pointer
 * arguments after `f` are passed along after `v`
  
 
